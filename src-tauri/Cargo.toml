@@ -10,6 +10,8 @@ edition = "2021"
 rust-version = "1.57"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[env]
+RUST_BACKTRACE=1
 
 [build-dependencies]
 tauri-build = { version = "1.0.3", features = [] }
@@ -27,11 +29,17 @@ lrc = "0.1"
 async-recursion = "1.0.0"
 regex = "1"
 tokio = { version = "1", features = ["full"] }
+log = "0.4"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.38.0",features = [
     "Media_Control",
+    "Media_Playback",
     "Foundation",
+    "Win32_Foundation",
+    "Win32_Media_MediaPlayer",
+    "Win32_System_Com",
+    "Win32_Media_MediaFoundation",
 ] }
 
 [features]

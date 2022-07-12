@@ -4,6 +4,7 @@ use crate::get_lyrics::{song_struct::Song};
 use crate::get_lyrics::netease::{self, get_default_song};
 use crate::get_lyrics::lyric_file::{set_lyric_file, get_lyric_file};
 use crate::parse_lyric::parser;
+use log::{warn};
 
 #[tauri::command]
 pub fn connect_test(text: &str) -> String {
@@ -11,17 +12,26 @@ pub fn connect_test(text: &str) -> String {
 }
 
 #[tauri::command]
-pub fn get_next_inline_lyric() -> String {
-    let player_info = get_player_info().unwrap();
-    let song_name = player_info["title"].as_str().unwrap();
-    let artist_name = player_info["artist"].as_str().unwrap();
-    let song_info = format!("{} - {}", song_name, artist_name);
+pub async fn get_next_inline_lyric() -> String {
+    let player_info = match get_player_info().await{
+        Ok(info) => (info),
+        Err(err) => {
+            warn!("error: {}", err);
+            Default::default()
+        },
+    };
+    let song_info = format!("{} - {}", player_info.title, player_info.artist);
     let song = get_default_song(&song_info);
     let lrc = parser::active_lyric(song);
-    let time = player_info["position"].as_f64().unwrap();
-    let lyric_inline = parser::get_lyric_inline(&lrc, time);
+    let time = player_info.position;
 
-    lyric_inline.unwrap()
+    match parser::get_lyric_inline(&lrc, time) {
+        Ok(s) => (s),
+        Err(err) => {
+            warn!("error: {}", err);
+            String::from("errrrrrrrr")
+        },
+    }
 }
 
 // Old style sync

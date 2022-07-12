@@ -13,17 +13,17 @@ pub fn active_lyric(song: Song) -> Lyrics {
     lyrics
 }
 
-fn time_f64_to_time_tag(time: f64) -> TimeTag {
-    let time_mm = (time.floor()/60.0).floor();
-    let time_ss = time.floor()%60.0;
-    let time_ms = time.fract()*1000.0;
-    let total_ms = ((time_mm*60.0 + time_ss)*1000.0 + time_ms.floor()) as i64;
+fn time_f64_to_time_tag(time: i64) -> TimeTag {
+    let time_mm = time/60;
+    let time_ss = time%60;
+    let time_ms = time*1000;
+    let total_ms = (time_mm*60 + time_ss)*1000 + time_ms ;
     //let time_str = format!("0{}:{}.{}", time_mm, time_ss, time_ms.floor());
     let time_tag = TimeTag::new(total_ms);
     time_tag
 }
 
-pub fn get_lyric_inline(lyrics: &Lyrics, time: f64) -> AnyResult<String> {
+pub fn get_lyric_inline(lyrics: &Lyrics, time: i64) -> AnyResult<String> {
     let time_tag = time_f64_to_time_tag(time);
     
     let mut lyric_inline = String::new();
