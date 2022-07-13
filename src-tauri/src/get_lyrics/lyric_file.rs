@@ -11,7 +11,7 @@ fn lyric_file_path(song: &Song) -> PathBuf {
     let user_dirs = UserDirs::new().unwrap();
     let document_path = user_dirs.document_dir().unwrap();
     let lyrecs_path = document_path.join("Lyrecs");
-    if lyrecs_path.clone().exists() {
+    if lyrecs_path.exists() {
         if !lyrecs_path.is_dir() {
             panic!("lyrecs path is not a directory");
         }

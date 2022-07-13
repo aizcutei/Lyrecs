@@ -3,6 +3,9 @@
   windows_subsystem = "windows"
 )]
 
+#[macro_use]
+extern crate lazy_static;
+
 mod player_info;
 mod get_lyrics;
 mod parse_lyric;

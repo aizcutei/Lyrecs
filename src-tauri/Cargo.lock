@@ -60,6 +60,8 @@ dependencies = [
  "anyhow",
  "async-recursion",
  "directories",
+ "lazy_static",
+ "log",
  "lrc",
  "regex",
  "reqwest",

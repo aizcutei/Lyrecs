@@ -5,17 +5,17 @@ use serde_json::Value;
 
 #[derive(Debug, Default, Clone)]
 pub struct PlayerInfo {
-   pub state: String,
-   pub title: String,
-   pub artist: String,
-   pub album: String,
-   pub duration: f64,
-   pub position: f64,
+    pub state: String,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub duration: f64,
+    pub position: f64,
 }
 
 
 #[cfg(target_os = "macos")]
-pub fn get_player_info() -> AnyResult<Value> {
+pub async fn get_player_info() -> AnyResult<PlayerInfo> {
     let query_running_status_script = r#"
         var Sys = Application("System Events")
         var running = Sys.processes['Music'].exists()
@@ -50,8 +50,18 @@ pub fn get_player_info() -> AnyResult<Value> {
         .output()
         .expect("OSA process failed to execute");
 
-        let player_info: Value = serde_json::from_slice(&query_playing_result.stdout)
-            .expect("Failed to parse player info");
+        let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout)
+            .expect("Failed to parse player info, No song is playing or Music is not running");
+
+
+        let player_info = PlayerInfo {
+            state: player_info_result["state"].as_str().unwrap().to_string(),
+            title: player_info_result["title"].as_str().unwrap().to_string(),
+            artist: player_info_result["artist"].as_str().unwrap().to_string(),
+            album: player_info_result["album"].as_str().unwrap().to_string(),
+            duration: player_info_result["duration"].as_f64().unwrap(),
+            position: player_info_result["position"].as_f64().unwrap(),
+        };
 
         Ok(player_info)
     } else {
@@ -61,7 +71,7 @@ pub fn get_player_info() -> AnyResult<Value> {
 
 
 #[cfg(target_os = "windows")]
- pub async fn get_player_info() -> AnyResult<PlayerInfo> {
+pub async fn get_player_info() -> AnyResult<PlayerInfo> {
     use std::{io::ErrorKind};
 
     use anyhow::Ok;
@@ -76,7 +86,7 @@ pub fn get_player_info() -> AnyResult<Value> {
     let timeline = &current_session.GetTimelineProperties()?;
     let status = &current_session.GetPlaybackInfo()?.PlaybackStatus()?.0;
     
-   Ok(PlayerInfo {
+    Ok(PlayerInfo {
         state: status.to_string(),
         title: track_info.Title()?.to_string(),
         artist: track_info.Artist()?.to_string(),
@@ -136,6 +146,7 @@ mod tests {
         // let player_info = get_player_info();
     }
 
+    #[cfg(target_os = "windows")]
     #[test]
     fn test_get_app_id() {
         println!("{}",get_app_id_by_name("iTunes"));
