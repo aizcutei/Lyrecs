@@ -9,8 +9,8 @@ pub struct PlayerInfo {
    pub title: String,
    pub artist: String,
    pub album: String,
-   pub duration: i64,
-   pub position: i64,
+   pub duration: f64,
+   pub position: f64,
 }
 
 
@@ -62,10 +62,16 @@ pub fn get_player_info() -> AnyResult<Value> {
 
 #[cfg(target_os = "windows")]
  pub async fn get_player_info() -> AnyResult<PlayerInfo> {
+    use std::{io::ErrorKind};
+
+    use anyhow::Ok;
     use windows::Media::Control;
     /* UWP API, desktop API in investigation */
     let session = Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync();
     let current_session = &(session?.await?.GetCurrentSession()?);
+    if current_session.SourceAppUserModelId()?.to_string() != get_app_id_by_name("iTunes") {
+        return Err(anyhow::Error::new(std::io::Error::new(ErrorKind::Other, "itunes not running")))
+    };
     let track_info = &current_session.TryGetMediaPropertiesAsync()?.await?;
     let timeline = &current_session.GetTimelineProperties()?;
     let status = &current_session.GetPlaybackInfo()?.PlaybackStatus()?.0;
@@ -75,9 +81,28 @@ pub fn get_player_info() -> AnyResult<Value> {
         title: track_info.Title()?.to_string(),
         artist: track_info.Artist()?.to_string(),
         album: track_info.AlbumTitle()?.to_string(),
-        duration: timeline.EndTime()?.Duration - timeline.StartTime()?.Duration,
-        position: timeline.Position()?.Duration,
+        duration: timeline.EndTime()?.Duration as f64 - timeline.StartTime()?.Duration as f64,
+        position: timeline.Position()?.Duration as f64,
     })
+}
+
+#[cfg(target_os = "windows")]
+fn get_app_id_by_name(name: &str ) -> String {
+    use std::process::Command;
+    use std::{str, fs};
+    let args:[&str; 8] = ["-C", "get-startapps", "iTunes", "|" , "out-file","out.txt", "-encoding", "utf8"];
+    Command::new("powershell")
+        .args(args)
+        .output()
+        .expect("Failed to execute powershell command");
+    let res = fs::read_to_string("out.txt").expect("Something went wrong reading the file");
+    for s in res.split("\n") {
+        let id = s.strip_prefix(name);
+        if id.is_some() {
+            return String::from(id.unwrap().trim())
+        }
+     }
+     String::from("")
 }
 
 #[cfg(target_os = "windows")]
@@ -113,6 +138,10 @@ mod tests {
                 warn!("asdasdad");
             });
         // let player_info = get_player_info();
-        
+    }
+
+    #[test]
+    fn test_get_app_id() {
+        println!("{}",get_app_id_by_name("iTunes"));
     }
 }
