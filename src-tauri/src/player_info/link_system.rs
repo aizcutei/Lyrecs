@@ -96,13 +96,9 @@ fn get_app_id_by_name(name: &str ) -> String {
         .output()
         .expect("Failed to execute powershell command");
     let res = fs::read_to_string("out.txt").expect("Something went wrong reading the file");
-    for s in res.split("\n") {
-        let id = s.strip_prefix(name);
-        if id.is_some() {
-            return String::from(id.unwrap().trim())
-        }
-     }
-     String::from("")
+    res.split('\n').find(|line| line.starts_with(name))
+                    .and_then(|s| s.strip_prefix(name))
+                    .map_or(String::new(), |s| String::from(s.trim()))
 }
 
 #[cfg(target_os = "windows")]
