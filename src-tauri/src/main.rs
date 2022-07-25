@@ -42,8 +42,6 @@ fn main() {
       tauri_command::connect_test,
       tauri_command::get_next_inline_lyric
       ])
-    //.invoke_handler(tauri::generate_handler![sync_player_info])
-    //.invoke_handler(tauri::generate_handler![send_default_lyric])
     .setup(|app| {
       let win = app.get_window("main").unwrap();
       set_shadow(&win, false).expect("Unsupported platform!");

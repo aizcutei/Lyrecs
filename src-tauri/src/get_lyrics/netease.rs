@@ -11,20 +11,20 @@ const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&limit=5&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
 
-pub fn get_song_list(key_word: &str) -> AnyResult<SongList> {
+pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word;
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
 
     let resp = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send()?;
+        .send().await?;
 
     //println!("{:?}", res.text());
 
-    let json: Value = serde_json::from_str(resp.text().unwrap().as_str())?;
+    let json: Value = serde_json::from_str(resp.text().await.unwrap().as_str())?;
 
     //println!("{:?}", json["result"]["songs"][0]["id"].as_i64());
 
@@ -42,18 +42,18 @@ pub fn get_song_list(key_word: &str) -> AnyResult<SongList> {
     Ok(song_list)
 }
 
-pub fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
+pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
     
     let requrl = LYRIC_URL.to_string() + &song.id.to_string();
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::Client::new();
 
     let res = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send()?;
+        .send().await?;
 
-    let json: Value = serde_json::from_str(res.text().unwrap().as_str())?;
+    let json: Value = serde_json::from_str(res.text().await.unwrap().as_str())?;
 
     if json["code"].as_i64() != serde::__private::Some(200) {
         return Err(anyhow::anyhow!("get_song_lyric error"));
@@ -95,8 +95,8 @@ pub fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
 
 }
 
-pub fn get_default_song(song_name: &str) -> Song {
-    let song_list = get_song_list(song_name).unwrap();
+pub async fn get_default_song(song_name: &str) -> Song {
+    let song_list = get_song_list(song_name).await.unwrap();
     song_list[0].to_owned()
 }
 

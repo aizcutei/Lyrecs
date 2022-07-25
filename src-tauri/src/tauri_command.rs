@@ -21,17 +21,11 @@ pub async fn get_next_inline_lyric() -> String {
         },
     };
     let song_info = format!("{} - {}", player_info.title, player_info.artist);
-    let song = get_default_song(&song_info);
-    let lrc = parser::active_lyric(song);
+    let lrc = parser::active_lyric(&player_info).await;
     let time = player_info.position;
 
-    match parser::get_lyric_inline(&lrc, time) {
-        Ok(s) => (s),
-        Err(err) => {
-            warn!("error: {}", err);
-            String::from("errrrrrrrr")
-        },
-    }
+    let next_lrc = lrc.get_time_line_by_time(time).unwrap();
+    next_lrc.lyric_str()
 }
 
 // Old style sync

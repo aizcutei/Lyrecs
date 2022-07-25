@@ -1,5 +1,7 @@
 use serde_json::Value;
 use std::ops::Index;
+
+#[derive(Debug, Default, Clone)]
 pub struct Song {
     pub name: String,
     pub artist: String,
@@ -10,6 +12,7 @@ pub struct Song {
 
 pub struct SongList (Vec<Song>);
 
+#[derive(Debug, Clone)]
 pub struct SongLyrics {
     pub lyric: String,
     pub tlyric: String,
@@ -23,6 +26,14 @@ impl SongLyrics {
             tlyric: String::new(),
             klyric: String::new(),
         }
+    }
+
+    pub fn get_original_lyric(&self) -> Option<String> {
+        Some(self.lyric.clone())
+    }
+
+    pub fn get_translated_lyric(&self) -> Option<String> {
+        Some(self.tlyric.clone())
     }
 }
 
@@ -91,22 +102,5 @@ impl std::fmt::Debug for SongList {
 impl std::fmt::Display for Song {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Name: {}\nArtist: {}\nAlbum: {}\nID: {}\n\n", self.name, self.artist, self.album, self.id)
-    }
-}
-
-impl std::fmt::Debug for Song {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Name: {}\nArtist: {}\nAlbum: {}\nID: {}\n\n", self.name, self.artist, self.album, self.id)
-    }
-}
-
-impl Clone for Song {
-    fn clone(&self) -> Self {
-        Song {
-            name: self.name.clone(),
-            artist: self.artist.clone(),
-            album: self.album.clone(),
-            id: self.id.clone(),
-        }
     }
 }

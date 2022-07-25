@@ -27,7 +27,7 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         var track = Music.currentTrack();
         var title = track.name();
         var artist = track.artist();
-        var album = track.album;
+        var album = track.album();
         var duration = track.duration();
         var state = Music.playerState();
         var obj = {state:state,position:time,title:title,duration:duration,artist:artist,album:album};
