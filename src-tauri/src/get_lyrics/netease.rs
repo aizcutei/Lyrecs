@@ -34,6 +34,10 @@ pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 
     let mut song_list = SongList::new();
 
+    if json["result"]["songCount"].as_i64() == serde::__private::Some(0) {
+        return Ok(song_list);
+    }
+    
     for song in json["result"]["songs"].as_array().unwrap() {
         let song = Song::new(song);
         song_list.push(song);
@@ -43,6 +47,10 @@ pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 }
 
 pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
+
+    if song.is_empty() {
+        return Err(anyhow::anyhow!("No search result"));
+    }
     
     let requrl = LYRIC_URL.to_string() + &song.id.to_string();
 
@@ -97,6 +105,9 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
 
 pub async fn get_default_song(song_name: &str) -> Song {
     let song_list = get_song_list(song_name).await.unwrap();
+    if song_list.len() == 0 {
+        return Song::new_empty();
+    }
     song_list[0].to_owned()
 }
 

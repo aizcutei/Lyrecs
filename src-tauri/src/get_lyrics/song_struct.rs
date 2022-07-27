@@ -10,6 +10,7 @@ pub struct Song {
     
 }
 
+#[derive(Default, Clone)]
 pub struct SongList (Vec<Song>);
 
 #[derive(Debug, Clone)]
@@ -17,6 +18,12 @@ pub struct SongLyrics {
     pub lyric: String,
     pub tlyric: String,
     pub klyric: String,
+}
+
+impl ExactSizeIterator for SongList {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl SongLyrics {
@@ -54,6 +61,17 @@ impl Song {
             album: song["album"]["name"].as_str().unwrap().to_string(),
             id: song["id"].as_i64().unwrap().to_string(),
         }
+    }
+    pub fn new_empty() -> Song {
+        Song {
+            name: String::new(),
+            artist: String::new(),
+            album: String::new(),
+            id: String::new(),
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.name.is_empty() && self.artist.is_empty() && self.album.is_empty() && self.id.is_empty()
     }
 }
 

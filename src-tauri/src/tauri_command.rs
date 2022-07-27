@@ -20,7 +20,6 @@ pub async fn get_next_inline_lyric() -> String {
             Default::default()
         },
     };
-    let song_info = format!("{} - {}", player_info.title, player_info.artist);
     let lrc = parser::active_lyric(&player_info).await;
     let time = player_info.position;
 
