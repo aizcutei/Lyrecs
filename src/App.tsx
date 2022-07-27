@@ -1,19 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect, useReducer } from 'react'
 import logo from './logo.svg'
 import './App.css'
 import { appWindow } from '@tauri-apps/api/window'
 import { invoke } from '@tauri-apps/api'
 
+function reducer(state: {nextLyric: string}) {
+  let nextLyric = "";
+  invoke('get_next_inline_lyric',{})
+      .then((text) => {
+        //@ts-ignore
+        nextLyric = text;
+      })
+      .catch((err) => {
+        console.log(err);
+      }
+      );
+
+  console.log("???" + nextLyric)
+  return {nextLyric: nextLyric}
+}
+
+function IntervalBody() {
+  const [state, dispatch] = useReducer(reducer, { nextLyric: "Hello" });
+  useEffect(() => {
+    setInterval(() => {
+      dispatch();
+    }, 5000);
+  }, []);
+
+  return (
+    <p data-tauri-drag-region id="lyric">{state.nextLyric}</p>
+  )
+}
+
 function App() {
   let lyricInLine = 'Say "Hello" to my little world!!'
 
-
   invoke('connect_test', {text: "backend"})
-      .then((text) => {
-        console.log(text)
-      })
-
-  invoke('get_next_inline_lyric',{})
       .then((text) => {
         console.log(text)
       })
@@ -22,7 +45,7 @@ function App() {
     <div className="App">
       <header data-tauri-drag-region className="App-header">
         
-        <p data-tauri-drag-region id="lyric">{lyricInLine}</p>
+        <IntervalBody />
       </header>
     </div>
   )
