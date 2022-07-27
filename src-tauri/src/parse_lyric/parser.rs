@@ -5,10 +5,13 @@ use crate::{player_info::link_system::{self, PlayerInfo}, get_lyrics::{song_stru
 use crate::parse_lyric::lrcx_parser::{Lrcx};
 
 
-pub async fn active_lyric(song: &PlayerInfo) -> Lrcx {
+pub async fn active_lyric(song: &PlayerInfo) -> AnyResult<Lrcx> {
     let lyric_str = get_lyric_file(&song).await.unwrap();
+    if lyric_str.is_empty() {
+        return Err(anyhow::anyhow!("lyric file is empty"));
+    }
 
-    let lyrics = Lrcx::from_str(lyric_str).unwrap();
+    let lyrics = Lrcx::from_str(lyric_str);
 
     lyrics
 }

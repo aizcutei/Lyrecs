@@ -33,7 +33,7 @@ fn find_lyric_file(song: &PlayerInfo) -> AnyResult<bool> {
 }
 
 
-pub async fn set_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
+pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
     let if_exist = find_lyric_file(song).unwrap();
     let lyric_path = lyric_file_path(song);
         let mut file = File::create(lyric_path)?;
@@ -49,7 +49,7 @@ pub async fn set_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
             file.write_all(line.to_string().as_bytes())?;
             file.write_all(b"\n")?;
         }
-        //write!(file, "{}", song_lyrics.get_original_lyric().unwrap())?;
+        write!(file, "{}", song_lyrics.get_original_lyric().unwrap())?;
         Ok(song_lyrics.get_original_lyric().unwrap())
     }
 }
@@ -64,6 +64,6 @@ pub async fn get_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
         file.read_to_string(&mut lyric)?;
         Ok(lyric)
     } else {
-        Ok(set_lyric_file(song).await.unwrap())
+        Ok(save_lyric_file(song).await.unwrap())
     }
 }

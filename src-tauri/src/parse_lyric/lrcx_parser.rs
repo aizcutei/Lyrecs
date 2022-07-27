@@ -35,6 +35,7 @@ impl LyricInline {
     pub fn lyric_str(&self) -> String {
         self.verse.clone()
     }
+    
 }
 
 impl IDTag {
@@ -69,9 +70,15 @@ impl Lrcx {
 
     pub fn from_str(s: String) -> AnyResult<Lrcx> {
         let mut lrcx = Lrcx::new();
-        let lines: Vec<&str> = s.split('\n').collect();
-        let LRC_METATAG_REGEX = Regex::new(r#"\[[a-z]+\]"#).unwrap();
-        let LRC_TIMELINE_REGEX = Regex::new(r#"\[.*\]:.*"#).unwrap();
+        let mut lrc_string: &str = &s;
+
+        if s.starts_with('"') {
+            lrc_string = &s[1..s.len() - 1];
+        }
+
+        let lines: Vec<&str> = lrc_string.split('\n').collect();
+        let lrc_metatag_regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
+        let lrc_timeline_regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
 
         for line in lines {
             let line = line.trim();
@@ -80,19 +87,19 @@ impl Lrcx {
                 continue;
             }
 
-            if LRC_METATAG_REGEX.captures(line).is_some() {
-                let re = LRC_METATAG_REGEX.captures(line).unwrap();
+            if lrc_metatag_regex.captures(line).is_some() {
+                let re = lrc_metatag_regex.captures(line).unwrap();
                 let tag_name = re.get(0).unwrap().as_str();
                 let tag_value = line[tag_name.len() + 1..].trim().to_string();
                 lrcx.metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
                 continue;
             }
 
-            if LRC_TIMELINE_REGEX.captures(line).is_some() {
-                let re = LRC_TIMELINE_REGEX.captures(line).unwrap();
+            if lrc_timeline_regex.captures(line).is_some() {
+                let re = lrc_timeline_regex.captures(line).unwrap();
                 let timestamp = re.get(0).unwrap().as_str();
-                let timestamp = parser::time_tag_to_time_f64(timestamp);
-                let verse = line[timestamp.to_string().len() + 2..].trim().to_string();
+                let verse = line[timestamp.to_string().len()..].trim().to_string();
+                let timestamp = parser::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
                 lrcx.lyric_body.push(LyricInline::new(timestamp, verse));
                 continue;
             }
@@ -101,12 +108,12 @@ impl Lrcx {
     }
 
     pub fn add_line(&mut self, line: String) -> AnyResult<Lrcx> {
-        let LRC_TIMELINE_REGEX = Regex::new(r#"\[.*\]:.*"#).unwrap();
-        if LRC_TIMELINE_REGEX.captures(&line).is_some() {
-            let re = LRC_TIMELINE_REGEX.captures(&line).unwrap();
+        let lrc_timeline_regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
+        if lrc_timeline_regex.captures(&line).is_some() {
+            let re = lrc_timeline_regex.captures(&line).unwrap();
             let timestamp = re.get(0).unwrap().as_str();
-            let timestamp = parser::time_tag_to_time_f64(timestamp);
-            let verse = line[timestamp.to_string().len() + 2..].trim().to_string();
+            let verse = line[timestamp.to_string().len()..].trim().to_string();
+            let timestamp = parser::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
             self.lyric_body.push(LyricInline::new(timestamp, verse));
             Ok(self.clone())
         }else{
