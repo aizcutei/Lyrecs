@@ -1,8 +1,9 @@
-use reqwest::header::USER_AGENT;
-use reqwest::header::COOKIE;
+use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
+use serde::Deserialize;
 use serde_json::Value;
 use anyhow::Ok;
 use anyhow::Result as AnyResult;
+use log::info;
 
 use crate::get_lyrics::song_struct::{Song, SongList, SongLyrics};
 
@@ -15,7 +16,10 @@ pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word;
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+    .proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
+    .proxy(reqwest::Proxy::https("http://127.0.0.1:7890")?)
+    .build()?;
 
     let resp = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
@@ -34,11 +38,9 @@ pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 
     let mut song_list = SongList::new();
 
-    if json["result"]["songCount"].as_i64() == serde::__private::Some(0) {
-        return Ok(song_list);
-    }
-    
+    info!("reveived song list");
     for song in json["result"]["songs"].as_array().unwrap() {
+        info!("{:?}", song["name"]);
         let song = Song::new(song);
         song_list.push(song);
     }
@@ -59,9 +61,11 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
     let res = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
+        .header(CONTENT_TYPE, "application/json")
         .send().await?;
 
-    let json: Value = serde_json::from_str(res.text().await.unwrap().as_str())?;
+    let re = res.text().await.unwrap();
+    let json: Value = serde_json::from_str(re.as_str())?;
 
     if json["code"].as_i64() != serde::__private::Some(200) {
         return Err(anyhow::anyhow!("get_song_lyric error"));

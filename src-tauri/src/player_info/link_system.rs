@@ -2,6 +2,7 @@
 use std::process;
 use anyhow::Result as AnyResult;
 use serde_json::Value;
+use log::{info};
 
 #[derive(Debug, Default, Clone)]
 pub struct PlayerInfo {
@@ -52,7 +53,6 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
 
         let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout)
             .expect("Failed to parse player info, No song is playing or Music is not running");
-
 
         let player_info = PlayerInfo {
             state: player_info_result["state"].as_str().unwrap().to_string(),

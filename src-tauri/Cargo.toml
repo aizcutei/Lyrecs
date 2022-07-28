@@ -30,16 +30,13 @@ regex = "1"
 tokio = { version = "1", features = ["full"] }
 log = "0.4"
 lazy_static = "1.4.0"
+env_logger = "0.9.0"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.38.0",features = [
     "Media_Control",
     "Media_Playback",
     "Foundation",
-    "Win32_Foundation",
-    "Win32_Media_MediaPlayer",
-    "Win32_System_Com",
-    "Win32_Media_MediaFoundation",
 ] }
 
 [features]

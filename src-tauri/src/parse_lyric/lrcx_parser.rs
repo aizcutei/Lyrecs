@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
-use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter};
 
+use log::info;
 use regex::Regex;
 use anyhow::Result as AnyResult;
 
@@ -68,7 +68,7 @@ impl Lrcx {
         }
     }
 
-    pub fn from_str(s: String) -> AnyResult<Lrcx> {
+    pub fn from_str(s: String, splitter: &str) -> AnyResult<Lrcx> {
         let mut lrcx = Lrcx::new();
         let mut lrc_string: &str = &s;
 
@@ -76,7 +76,8 @@ impl Lrcx {
             lrc_string = &s[1..s.len() - 1];
         }
 
-        let lines: Vec<&str> = lrc_string.split('\n').collect();
+        let lines: Vec<&str> = lrc_string.split(splitter).collect();
+        info!("{} lines", lines.len());
         let lrc_metatag_regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
         let lrc_timeline_regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
 
@@ -94,7 +95,6 @@ impl Lrcx {
                 lrcx.metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
                 continue;
             }
-
             if lrc_timeline_regex.captures(line).is_some() {
                 let re = lrc_timeline_regex.captures(line).unwrap();
                 let timestamp = re.get(0).unwrap().as_str();
@@ -135,8 +135,10 @@ impl Lrcx {
     }
 
     pub fn get_time_line_by_time(&self,time: f64) -> Option<LyricInline> {
+        info!("get_time_line_by_time: {}", time);
         let index = self.find_time_line_index(time);
         if index.is_some() {
+            info!("getting lyric index {}", index.unwrap());
             self.lyric_body.get(index.unwrap()).cloned()
         }else{
             None

@@ -19,10 +19,11 @@ use get_lyrics::netease;
 use window_vibrancy::{apply_blur, apply_vibrancy, NSVisualEffectMaterial}; */
 use tauri::Manager;
 use window_shadows::set_shadow;
-
+use env_logger;
 
 fn main() {
   //env::set_var("RUST_BACKTRACE", "1");
+  env_logger::init();
   tauri::Builder::default()
     // Blur effect
     /* .setup(|app| {
