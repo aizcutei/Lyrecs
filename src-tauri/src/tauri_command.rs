@@ -4,7 +4,7 @@ use crate::get_lyrics::{song_struct::Song};
 use crate::get_lyrics::netease::{self, get_default_song};
 use crate::get_lyrics::lyric_file::{save_lyric_file, get_lyric_file};
 use crate::parse_lyric::parser;
-use log::{warn};
+use log::{warn, info};
 use crate::parse_lyric::lrcx_parser::{Lrcx};
 
 #[tauri::command]
@@ -24,8 +24,8 @@ pub async fn get_next_inline_lyric() -> String {
     };
     let lrc = parser::active_lyric(&player_info).await.unwrap();
     let time = player_info.position;
-
     let next_lrc = lrc.get_time_line_by_time(time).unwrap();
+    info!("next {}", next_lrc.lyric_str());
     next_lrc.lyric_str()
 }
 

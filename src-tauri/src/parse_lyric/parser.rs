@@ -1,17 +1,19 @@
 use std::rc::Rc;
 use anyhow::Result as AnyResult;
+use log::info;
 
 use crate::{player_info::link_system::{self, PlayerInfo}, get_lyrics::{song_struct::Song, lyric_file::get_lyric_file}};
 use crate::parse_lyric::lrcx_parser::{Lrcx};
 
 
 pub async fn active_lyric(song: &PlayerInfo) -> AnyResult<Lrcx> {
+    info!("getting lyric for {}, artist {}", song.title, song.artist);
     let lyric_str = get_lyric_file(&song).await.unwrap();
     if lyric_str.is_empty() {
         return Err(anyhow::anyhow!("lyric file is empty"));
     }
 
-    let lyrics = Lrcx::from_str(lyric_str);
+    let lyrics = Lrcx::from_str(lyric_str, "\n");
 
     lyrics
 }
