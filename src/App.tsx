@@ -4,32 +4,54 @@ import './App.css'
 import { appWindow } from '@tauri-apps/api/window'
 import { invoke } from '@tauri-apps/api'
 
+//old reducer way
+{/*
 function reducer(state: {nextLyric: string}) {
-  let nextLyric = "";
-  invoke('get_next_inline_lyric',{})
-      .then((text) => {
-        //@ts-ignore
-        nextLyric = text;
-      })
-      .catch((err) => {
-        console.log(err);
-      }
-      );
+  let nextLyric = invoke('get_next_inline_lyric')
 
+  invoke('get_next_inline_lyric',{})
+    .then((text) => {
+      //@ts-ignore
+      nextLyric = text;
+    })
+    .catch((err) => {
+      console.log(err);
+    }
+    );
   console.log("???" + nextLyric)
   return {nextLyric: nextLyric}
 }
+*/}
 
 function IntervalBody() {
+{/*
   const [state, dispatch] = useReducer(reducer, { nextLyric: "Hello" });
   useEffect(() => {
     setInterval(() => {
       dispatch();
     }, 5000);
   }, []);
+*/}
+
+  const [lyric, setLyric] = useState("Hello")
+  useEffect(() => {
+    let interval = setInterval(() => {
+      invoke('get_next_inline_lyric',{})
+        .then((text) => {
+          setLyric(text as string);
+        }
+        )
+        .catch((err) => {
+          console.log(err);
+        }
+        );
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   return (
-    <p data-tauri-drag-region id="lyric">{state.nextLyric}</p>
+    <p data-tauri-drag-region id="lyric">{lyric}</p>
   )
 }
 
