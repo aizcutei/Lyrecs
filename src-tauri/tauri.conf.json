@@ -61,6 +61,8 @@
     },
     "windows": [
       {
+        "label": "main",
+        "url": "index.html",
         "fullscreen": false,
         "height": 85,
         "resizable": true,
