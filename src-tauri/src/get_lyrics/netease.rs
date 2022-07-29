@@ -16,10 +16,7 @@ pub async fn get_song_list(key_word: &str) -> AnyResult<SongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word;
 
-    let client = reqwest::Client::builder()
-    .proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
-    .proxy(reqwest::Proxy::https("http://127.0.0.1:7890")?)
-    .build()?;
+    let client = reqwest::Client::new();
 
     let resp = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
@@ -57,7 +54,6 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
     let requrl = LYRIC_URL.to_string() + &song.id.to_string();
 
     let client = reqwest::Client::new();
-
     let res = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
@@ -77,7 +73,7 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
         if lyc.get("lyric").unwrap().is_null() {
             lrc.lyric = "[00:00.000] This Music No Lyric".to_string();
         } else {
-            lrc.lyric = lyc.get("lyric").unwrap().to_string();
+            lrc.lyric = lyc.get("lyric").unwrap().to_string().replace("\\n", "\n"); // replace \\n to \n
         };
     } else {
         lrc.lyric = "[00:00.000] Get lyric Error".to_string();

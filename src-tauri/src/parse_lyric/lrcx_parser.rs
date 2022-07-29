@@ -124,7 +124,7 @@ impl Lrcx {
     pub fn find_time_line_index(&self,time: f64) -> Option<usize> {
         for (i, line) in self.lyric_body.iter().enumerate().rev() {
             if line.timestamp <= time {
-                return Some(i);
+                return Some(i)
             }
         }
         None
@@ -137,12 +137,11 @@ impl Lrcx {
     pub fn get_time_line_by_time(&self,time: f64) -> Option<LyricInline> {
         info!("get_time_line_by_time: {}", time);
         let index = self.find_time_line_index(time);
-        if index.is_some() {
+        if let Some(i) = index {
             info!("getting lyric index {}", index.unwrap());
-            self.lyric_body.get(index.unwrap()).cloned()
-        }else{
-            None
+            return self.lyric_body.get(i).cloned()
         }
+        None
     }
 
     pub fn iter(&self) -> std::slice::Iter<LyricInline> {
