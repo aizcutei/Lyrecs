@@ -1,4 +1,3 @@
-use serde_json::{json, Value, Map};
 use crate::{link_system::get_player_info, player_info};
 use crate::get_lyrics::{song_struct::Song};
 use crate::get_lyrics::netease::{self, get_default_song};
@@ -14,19 +13,27 @@ pub fn connect_test(text: &str) -> String {
 
 #[tauri::command]
 pub async fn get_next_inline_lyric() -> String {
-
     let player_info = match get_player_info().await{
         Ok(info) => (info),
         Err(err) => {
             warn!("error: {}", err);
-            Default::default()
+            return "".to_string()
         },
     };
-    let lrc = parser::active_lyric(&player_info).await.unwrap();
-    let time = player_info.position;
-    let next_lrc = lrc.get_time_line_by_time(time).unwrap();
-    info!("next {}", next_lrc.lyric_str());
-    next_lrc.lyric_str()
+    parser::activate_lyric(&player_info)
+    .await
+    .map_or_else(
+        |err|{
+            warn!("error: {}", err);
+            String::from("")
+        },
+        |lrc| {
+            let time = player_info.position;
+            let next_lrc = lrc.get_time_line_by_time(time).unwrap();
+            info!("next {}", next_lrc.lyric_str());
+            next_lrc.lyric_str()
+        })
+    
 }
 
 //test case

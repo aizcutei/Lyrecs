@@ -2,7 +2,7 @@
 use std::process;
 use anyhow::Result as AnyResult;
 use serde_json::Value;
-use log::{info};
+use log::{info, warn};
 
 #[derive(Debug, Default, Clone)]
 pub struct PlayerInfo {
@@ -51,8 +51,13 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         .output()
         .expect("OSA process failed to execute");
 
-        let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout)
-            .expect("Failed to parse player info, No song is playing or Music is not running");
+        let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout).map_or_else(|err|{
+            warn!("No song is playing or Music is not running{}", err);
+            Value::Null
+        }, |player_info| player_info);
+        if player_info_result.is_null() {
+            return Err(anyhow::anyhow!("No song is playing or Music is not running"))
+        }
 
         let player_info = PlayerInfo {
             state: player_info_result["state"].as_str().unwrap().to_string(),
@@ -63,10 +68,10 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
             position: player_info_result["position"].as_f64().unwrap(),
         };
 
-        Ok(player_info)
-    } else {
-        return Err(anyhow::anyhow!("Apple Music is not running"));
+        return Ok(player_info)
     }
+    Err(anyhow::anyhow!("Apple Music is not running"))
+    
 }
 
 
