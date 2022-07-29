@@ -36,7 +36,7 @@ pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     info!("default song {} \n getting lyric", default_song.name);
     let song_lyrics = get_song_lyric(&default_song).await.unwrap();
     info!("song_lyrics {:?}", song_lyrics);
-    let lrcx = Lrcx::from_str(song_lyrics.get_original_lyric().unwrap(), "\\n").unwrap();
+    let lrcx = Lrcx::from_str(song_lyrics.get_original_lyric().unwrap(), "\n").unwrap();
     info!("writing lyric file of length {}", lrcx.iter().len());
     let mut file = File::create(lyric_file_path(song))?;
     for line in lrcx.iter() {
