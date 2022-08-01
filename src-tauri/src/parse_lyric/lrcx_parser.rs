@@ -147,6 +147,10 @@ impl Lrcx {
     pub fn iter(&self) -> std::slice::Iter<LyricInline> {
         self.lyric_body.iter()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.lyric_body.is_empty()
+    }
 }
 
 impl Display for Lrcx {

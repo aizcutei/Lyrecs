@@ -4,7 +4,8 @@ use std::path::PathBuf;
 use anyhow::Result as AnyResult;
 use directories::UserDirs;
 use log::info;
-use crate::get_lyrics::netease::get_song_lyric;
+use crate::get_lyrics::netease::{get_song_lyric, get_best_match_song};
+use crate::get_lyrics::song_struct::Song;
 use crate::parse_lyric::lrcx_parser::Lrcx;
 use crate::player_info::link_system::PlayerInfo;
 
@@ -32,13 +33,29 @@ fn lyric_file_exists(song: &PlayerInfo) -> bool {
 
 pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     info!("getting default song");
-    let default_song = get_default_song(&song.title).await;
+
+    let mut search_song = Song::new_empty();
+    search_song.name = song.title.clone().replace('&', "");
+    search_song.artist = song.artist.clone().replace('&', "");
+    //remove & in the keyword
+
+    let default_song = get_best_match_song(&search_song).await;
     info!("default song {} \n getting lyric", default_song.name);
+
     let song_lyrics = get_song_lyric(&default_song).await.unwrap();
     info!("song_lyrics {:?}", song_lyrics);
+
     let lrcx = Lrcx::from_str(song_lyrics.get_original_lyric().unwrap(), "\n").unwrap();
     info!("writing lyric file of length {}", lrcx.iter().len());
+
     let mut file = File::create(lyric_file_path(song))?;
+    
+    if lrcx.is_empty() {
+        file.write_all(b"[00:00.000] No Lyric for this song\n[00:10.000] \xE2\x99\xAB ~ ~ ~")?; //add a start line
+    } else {
+        file.write_all(b"[00:00.000] \n")?; //add a start line
+    }
+    
     for line in lrcx.iter() {
         file.write_all(line.to_string().as_bytes())?;
         file.write_all(b"\n")?;

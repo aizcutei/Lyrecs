@@ -12,14 +12,20 @@ pub fn connect_test(text: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn get_next_inline_lyric() -> String {
-    let player_info = match get_player_info().await{
+pub async fn get_next_inline_lyric(fix_time: f64) -> String {
+    let mut player_info = match get_player_info().await{
         Ok(info) => (info),
         Err(err) => {
             warn!("error: {}", err);
             return "".to_string()
         },
     };
+
+    //make sure player position is positive
+    if player_info.position >= fix_time.abs() {
+        player_info.position += fix_time;
+    }
+
     parser::activate_lyric(&player_info)
     .await
     .map_or_else(
