@@ -3,7 +3,7 @@
 </p>
 <h3 align="center">Lyrecs</h3>
 <p align="center">
-  A lyrics displayer for Apple Music.
+  A lyrics displayer for Apple Music
   <br/>
   <a href="https://github.com/aizcutei/lyrecs/releases"><b>Download is not avaliable for now</b></a>
 </p>
@@ -27,6 +27,6 @@ Lyrecs是一款跨平台的Apple Music的桌面动态歌词展示软件。Inspir
 
 - Install Rust and tauri on your device
 
-- Clone this repositorie
+- Clone this repository
 
 - Run`cargo tauri build`
