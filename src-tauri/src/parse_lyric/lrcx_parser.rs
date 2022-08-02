@@ -122,24 +122,55 @@ impl Lrcx {
     }
 
     pub fn find_time_line_index(&self,time: f64) -> Option<usize> {
+        let mut index: usize = 0;
         for (i, line) in self.lyric_body.iter().enumerate().rev() {
             if line.timestamp <= time {
-                return Some(i)
+                index = i;
             }
+        }
+        while index > 0 &&
+            self.get_first_time_line_by_index(index).unwrap().timestamp == self.get_first_time_line_by_index(index - 1).unwrap().timestamp {
+                index -= 1;
+        }
+        Some(index)
+    }
+
+    pub fn get_first_time_line_by_index(&self,index: usize) -> Option<LyricInline> {
+        info!("getting first line lyric index {}", index);
+        self.lyric_body.get(index).cloned()
+    }
+
+    pub fn get_full_time_line_by_index(&self, i: usize) -> Option<Vec<&LyricInline>> {
+        info!("get full time line by index: {}", i);
+        let mut index = i;
+        let mut full_time_line = Vec::new();
+        full_time_line.push(self.lyric_body.get(index).unwrap());
+        info!(" - Find one time line by index: {}", i);
+
+        while self.get_first_time_line_by_index(index).unwrap().timestamp == self.get_first_time_line_by_index(index + 1).unwrap().timestamp {
+            full_time_line.push(self.lyric_body.get(index + 1).unwrap());
+            info!(" - Find one time line by index: {}", index + 1);
+            index += 1;
+        }
+
+        Some(full_time_line)
+    }
+
+    pub fn get_first_time_line_by_time(&self, time: f64) -> Option<LyricInline> {
+        info!("get first time line by time: {}", time);
+        let index = self.find_time_line_index(time);
+        if let Some(i) = index {
+            return self.lyric_body.get(i).cloned()
         }
         None
     }
 
-    pub fn get_time_line_by_index(&self,index: usize) -> Option<LyricInline> {
-        self.lyric_body.get(index).cloned()
-    }
+    pub fn get_full_time_line_by_time(&self, time:f64) -> Option<Vec<&LyricInline>> {
+        info!("get full time line by time: {}", time);
+        let mut index = self.find_time_line_index(time);
 
-    pub fn get_time_line_by_time(&self,time: f64) -> Option<LyricInline> {
-        info!("get_time_line_by_time: {}", time);
-        let index = self.find_time_line_index(time);
         if let Some(i) = index {
-            info!("getting lyric index {}", index.unwrap());
-            return self.lyric_body.get(i).cloned()
+            return self.get_full_time_line_by_index(i)
         }
         None
     }

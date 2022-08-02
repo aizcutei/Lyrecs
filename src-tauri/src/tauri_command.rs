@@ -4,6 +4,9 @@ use crate::get_lyrics::netease::{self, get_default_song};
 use crate::get_lyrics::lyric_file::{save_lyric_file, get_lyric_file};
 use crate::parse_lyric::parser;
 use log::{warn, info};
+use serde::ser::SerializeStruct;
+use serde::{Serializer, Serialize, Deserialize};
+use serde_json::{Result, Value};
 use crate::parse_lyric::lrcx_parser::{Lrcx};
 
 #[tauri::command]
@@ -35,9 +38,25 @@ pub async fn get_next_inline_lyric(fix_time: f64) -> String {
         },
         |lrc| {
             let time = player_info.position;
-            let next_lrc = lrc.get_time_line_by_time(time).unwrap();
-            info!("next {}", next_lrc.lyric_str());
-            next_lrc.lyric_str()
+            let mut passing = Passing_lrc::new_empty();
+
+            let next_full_lrc = lrc.get_full_time_line_by_time(time).unwrap();
+            info!("next {}", next_full_lrc.len());
+            if next_full_lrc.len() == 0{
+                passing.origin_lrc = "Can not get next lyric".to_owned();
+            }else if next_full_lrc.len() == 1 {
+                passing.origin_lrc = next_full_lrc.get(0).unwrap().lyric_str();
+            }else {
+                for line in next_full_lrc {
+                    if line.lyric_str().starts_with("[tt]"){
+                        let key_frame_str = &line.to_string()[4..];
+                        let key_frame = key_frame_str.split(' ');
+                        unimplemented!()
+                    }
+                }
+            }
+            
+            serde_json::to_string(&passing).unwrap()
         })
     
 }
@@ -66,4 +85,35 @@ pub fn send_default_lyric(song: Value) -> String{
     let default_song = netease::get_default_song(song["name"].as_str().unwrap());
     get_lyric_file(&default_song).unwrap()
 } */
+
+#[derive(Serialize, Deserialize)]
+struct Passing_lrc {
+    origin_lrc: String,
+    translated_lrc: String,
+    pronunciation: String,
+    key_frame: Vec<f64>,
+    is_paused: bool,
+}
+
+impl Passing_lrc {
+    fn new(origin_lrc: String, translated_lrc: String, pronunciation: String, key_frame: Vec<f64>, is_paused: bool) -> Self {
+        Self {
+            origin_lrc,
+            translated_lrc,
+            pronunciation,
+            key_frame,
+            is_paused,
+        }
+    }
+
+    fn new_empty() -> Self {
+        Self {
+            origin_lrc: "".to_string(),
+            translated_lrc: "".to_string(),
+            pronunciation: "".to_string(),
+            key_frame: vec![],
+            is_paused: false,
+        }
+    }
+}
 
