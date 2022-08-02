@@ -75,3 +75,12 @@ pub async fn get_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
     file.read_to_string(&mut lyric)?;
     Ok(lyric)
 }
+
+pub async fn activate_lyric(song: &PlayerInfo) -> AnyResult<Lrcx> {
+    info!("getting lyric for {}, artist {}", song.title, song.artist);
+    let lyric_str = get_lyric_file(song).await.unwrap();
+    if lyric_str.is_empty() {
+        return Err(anyhow::anyhow!("lyric file is empty"))
+    }
+    Lrcx::from_str(lyric_str, "\n")
+}

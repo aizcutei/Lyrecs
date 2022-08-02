@@ -1,8 +1,5 @@
-use crate::{link_system::get_player_info, player_info};
-use crate::get_lyrics::{song_struct::Song};
-use crate::get_lyrics::netease::{self, get_default_song};
-use crate::get_lyrics::lyric_file::{save_lyric_file, get_lyric_file};
-use crate::parse_lyric::parser;
+use crate::get_lyrics::lyric_file::{activate_lyric};
+use crate::player_info::link_system::get_player_info;
 use log::{warn, info};
 use crate::parse_lyric::lrcx_parser::{Lrcx};
 
@@ -26,8 +23,7 @@ pub async fn get_next_inline_lyric(fix_time: f64) -> String {
         player_info.position += fix_time;
     }
 
-    parser::activate_lyric(&player_info)
-    .await
+    activate_lyric(&player_info).await
     .map_or_else(
         |err|{
             warn!("error: {}", err);

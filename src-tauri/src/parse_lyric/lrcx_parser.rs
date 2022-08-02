@@ -5,7 +5,7 @@ use log::info;
 use regex::Regex;
 use anyhow::Result as AnyResult;
 
-use crate::parse_lyric::parser;
+use crate::parse_lyric::utils;
 
 #[derive(Debug, Clone)]
 pub struct LyricInline {
@@ -55,7 +55,7 @@ impl Display for IDTag {
 
 impl Display for LyricInline {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let timestamp = parser::time_f64_to_time_tag(self.timestamp);
+        let timestamp = utils::time_f64_to_time_tag(self.timestamp);
         write!(f, "[{}]{}", timestamp, self.verse)
     }
 }
@@ -99,7 +99,7 @@ impl Lrcx {
                 let re = lrc_timeline_regex.captures(line).unwrap();
                 let timestamp = re.get(0).unwrap().as_str();
                 let verse = line[timestamp.to_string().len()..].trim().to_string();
-                let timestamp = parser::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
+                let timestamp = utils::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
                 lrcx.lyric_body.push(LyricInline::new(timestamp, verse));
                 continue;
             }
@@ -113,7 +113,7 @@ impl Lrcx {
             let re = lrc_timeline_regex.captures(&line).unwrap();
             let timestamp = re.get(0).unwrap().as_str();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
-            let timestamp = parser::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
+            let timestamp = utils::time_tag_to_time_f64(timestamp[1..timestamp.len() - 1].trim());
             self.lyric_body.push(LyricInline::new(timestamp, verse));
             Ok(self.clone())
         }else{
