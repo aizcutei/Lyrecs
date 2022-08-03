@@ -48,7 +48,7 @@ function IntervalBody() {
           console.log(err);
         }
         );
-    }, 500);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 

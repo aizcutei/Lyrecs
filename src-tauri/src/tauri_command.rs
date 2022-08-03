@@ -1,4 +1,5 @@
-use crate::get_lyrics::lyric_file::{activate_lyric};
+use crate::get_lyrics::kugou::kugou_get_first_lyric;
+use crate::get_lyrics::lyric_file::{activate_lyric, kugou_save_lyric_file};
 use crate::player_info::link_system::get_player_info;
 use log::{warn, info};
 use serde::ser::SerializeStruct;
@@ -13,6 +14,7 @@ pub fn connect_test(text: &str) -> String {
 
 #[tauri::command]
 pub async fn get_next_inline_lyric(fix_time: f64) -> String {
+
     let mut player_info = match get_player_info().await{
         Ok(info) => (info),
         Err(err) => {
@@ -21,6 +23,7 @@ pub async fn get_next_inline_lyric(fix_time: f64) -> String {
         },
     };
 
+    kugou_save_lyric_file(&player_info).await;
     //make sure player position is positive
     if player_info.position >= fix_time.abs() {
         player_info.position += fix_time;

@@ -15,7 +15,7 @@ const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
 
-pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
+async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 

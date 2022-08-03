@@ -143,8 +143,7 @@ impl Lrcx {
     pub fn get_full_time_line_by_index(&self, i: usize) -> Option<Vec<&LyricInline>> {
         info!("get full time line by index: {}", i);
         let mut index = i;
-        let mut full_time_line = Vec::new();
-        full_time_line.push(self.lyric_body.get(index).unwrap());
+        let mut full_time_line = vec![self.lyric_body.get(index).unwrap()];
         info!(" - Find one time line by index: {}", i);
 
         while self.get_first_time_line_by_index(index).unwrap().timestamp == self.get_first_time_line_by_index(index + 1).unwrap().timestamp {

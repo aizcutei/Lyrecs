@@ -229,6 +229,13 @@ impl KugouSongLyrics {
             decoded: "".to_string(),
         }
     }
+
+    pub fn new_empty() -> Self {
+        KugouSongLyrics{
+            content: String::new(),
+            decoded: String::new(),
+        }
+    }
 }
 
 impl Index<usize> for KugouSongList {

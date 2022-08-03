@@ -15,6 +15,9 @@ use tauri::{SystemTray, SystemTrayEvent};
 use tauri::Manager;
 use tauri::{CustomMenuItem, SystemTrayMenu, SystemTrayMenuItem};
 
+use get_lyrics::kugou::{self, decode_lyric, kugou_get_first_lyric};
+use get_lyrics::song_struct::KugouSongLyrics;
+
 use player_info::link_system;
 use get_lyrics::netease;
 
@@ -25,9 +28,10 @@ use env_logger;
 
 fn main() {
   //env::set_var("RUST_BACKTRACE", "1");
+  
   env_logger::init();
 
-  
+
   let quit = CustomMenuItem::new("quit".to_string(), "Quit");
   let setting = CustomMenuItem::new("setting".to_string(), "Setting");
   let tray_menu = SystemTrayMenu::new()
@@ -67,7 +71,7 @@ fn main() {
           "quit" => {
             std::process::exit(0);
           }
-          "settinhg" => {
+          "setting" => {
             let setting_window = tauri::WindowBuilder::new(
               app,
               "setting",
