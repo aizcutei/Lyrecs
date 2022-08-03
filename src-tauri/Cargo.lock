@@ -59,8 +59,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-recursion",
+ "base64",
  "directories",
  "env_logger",
+ "flate2",
  "lazy_static",
  "log",
  "regex",

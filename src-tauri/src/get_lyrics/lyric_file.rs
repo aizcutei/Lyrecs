@@ -5,7 +5,7 @@ use anyhow::Result as AnyResult;
 use directories::UserDirs;
 use log::info;
 use crate::get_lyrics::netease::{get_song_lyric, get_best_match_song};
-use crate::get_lyrics::song_struct::Song;
+use crate::get_lyrics::song_struct::{NeteaseSong, Song};
 use crate::parse_lyric::lrcx_parser::Lrcx;
 use crate::player_info::link_system::PlayerInfo;
 
@@ -34,7 +34,7 @@ fn lyric_file_exists(song: &PlayerInfo) -> bool {
 pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     info!("getting default song");
 
-    let mut search_song = Song::new_empty();
+    let mut search_song = NeteaseSong::new_empty();
     search_song.name = song.title.clone().replace('&', "");
     search_song.artist = song.artist.clone().replace('&', "");
     //remove & in the keyword

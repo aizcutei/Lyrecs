@@ -6,14 +6,16 @@ use anyhow::Result as AnyResult;
 use strsim::levenshtein;
 use log::info;
 
-use crate::get_lyrics::song_struct::{Song, SongList, SongLyrics};
+use crate::get_lyrics::song_struct::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
+
+use super::song_struct::Song;
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
 const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
 
-pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<SongList> {
+pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 
@@ -34,19 +36,19 @@ pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<SongList> {
         return Err(anyhow::anyhow!("get_song_list error"));
     }
 
-    let mut song_list = SongList::new();
+    let mut song_list = NeteaseSongList::new();
 
     info!("reveived song list");
     for song in json["result"]["songs"].as_array().unwrap() {
         info!("{:?}", song["name"]);
-        let song = Song::new(song);
+        let song = NeteaseSong::new(song);
         song_list.push(song);
     }
     
     Ok(song_list)
 }
 
-pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
+pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> {
 
     if song.is_empty() {
         return Err(anyhow::anyhow!("No search result"));
@@ -68,7 +70,7 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
         return Err(anyhow::anyhow!("get_song_lyric error"));
     }
 
-    let mut lrc = SongLyrics::new();
+    let mut lrc = NeteaseSongLyrics::new();
 
     if let Some(lyc) = json.get("lrc") {
         if lyc.get("lyric").unwrap().is_null() {
@@ -104,18 +106,18 @@ pub async fn get_song_lyric(song: &Song) -> AnyResult<SongLyrics> {
 
 }
 
-pub async fn get_default_song(song_name: &Song) -> Song {
+pub async fn get_default_song(song_name: &NeteaseSong) -> NeteaseSong {
     let song_list = get_song_list(&song_name.name, 1).await.unwrap();
     if song_list.len() == 0 {
-        return Song::new_empty();
+        return NeteaseSong::new_empty();
     }
     song_list[0].to_owned()
 }
 
-pub async fn get_best_match_song(song_name: &Song) -> Song {
+pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     let song_list = get_song_list(&song_name.name, 5).await.unwrap();
     if song_list.len() == 0 {
-        return Song::new_empty();
+        return NeteaseSong::new_empty();
     }
     
     let mut best_match_song = song_list[0].to_owned();
@@ -137,7 +139,7 @@ pub async fn get_best_match_song(song_name: &Song) -> Song {
         let song_list = get_song_list(&search_key_word, 5).await.unwrap();
 
         if song_list.len() == 0 {
-            return Song::new_empty();
+            return NeteaseSong::new_empty();
         }
 
         for song in song_list {
