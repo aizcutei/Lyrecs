@@ -1,11 +1,14 @@
 use std::fs::File;
-use std::io::{Write, Read};
+use std::io::{Write, Read, BufWriter};
 use std::path::PathBuf;
 use anyhow::Result as AnyResult;
 use directories::UserDirs;
+use env_logger::fmt::BufferWriter;
 use log::info;
+use serde_json::json;
+use crate::api::lyric_line::{LyricTimeLine, LyricLine};
 use crate::get_lyrics::kugou;
-use crate::get_lyrics::netease::{get_song_lyric, get_best_match_song};
+use crate::get_lyrics::netease::{get_song_lyric, get_best_match_song, parse_netease_lyric};
 use crate::get_lyrics::song_struct::{NeteaseSong, Song, KugouSong};
 use crate::parse_lyric::lrcx_parser::Lrcx;
 use crate::player_info::link_system::PlayerInfo;
@@ -44,24 +47,23 @@ pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     let default_song = get_best_match_song(&search_song).await;
     info!("default song {} \n getting lyric", default_song.name);
 
-    let song_lyrics = get_song_lyric(&default_song).await.unwrap();
+    let song_lyrics = get_song_lyric(&default_song).await?;
     info!("song_lyrics {:?}", song_lyrics);
 
-    let lrcx = Lrcx::from_str(song_lyrics.get_original_lyric().unwrap(), "\n").unwrap();
-    info!("writing lyric file of length {}", lrcx.iter().len());
+    let mut lrcx = parse_netease_lyric(song_lyrics.get_original_lyric().unwrap(), "\n")?;
+    info!("writing lyric file of length {}", lrcx.lyric_body.len());
 
     let mut file = File::create(lyric_file_path(song))?;
     
-    if lrcx.is_empty() {
-        file.write_all(b"[00:00.000] No Lyric for this song\n[00:10.000] \xE2\x99\xAB ~ ~ ~")?; //add a start line
-    } else {
-        file.write_all(b"[00:00.000] \n")?; //add a start line
-    }
-    
-    for line in lrcx.iter() {
-        file.write_all(line.to_string().as_bytes())?;
-        file.write_all(b"\n")?;
-    }
+    let mut default_timeline: LyricTimeLine = Default::default();
+    if lrcx.lyric_body.len() == 0 {
+        default_timeline.line.set_text("No Lyric for this song".to_string());
+    } 
+    default_timeline.time = "00:00.000".to_string();
+    lrcx.lyric_body.insert(0, default_timeline);
+    let serial = serde_json::to_string(&lrcx)?;
+    write!(file, "{}", serial)?;
+
     Ok(())
 }
 

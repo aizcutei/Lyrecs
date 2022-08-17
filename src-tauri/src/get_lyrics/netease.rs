@@ -1,3 +1,4 @@
+use regex::Regex;
 use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
 use serde::Deserialize;
 use serde_json::Value;
@@ -6,7 +7,10 @@ use anyhow::Result as AnyResult;
 use strsim::levenshtein;
 use log::info;
 
+use crate::api::lyric_line::LyricTimeLine;
 use crate::get_lyrics::song_struct::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
+use crate::api::lyric_line::{Lrcx, IDTag};
+use crate::parse_lyric::utils;
 
 use super::song_struct::Song;
 
@@ -74,7 +78,7 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
 
     if let Some(lyc) = json.get("lrc") {
         if lyc.get("lyric").unwrap().is_null() {
-            lrc.lyric = "[00:00.000] This Music No Lyric".to_string();
+            lrc.lyric = "[00:00.000] This Music Has No Lyric".to_string();
         } else {
             lrc.lyric = lyc.get("lyric").unwrap().to_string().replace("\\n", "\n"); // replace \\n to \n
         };
@@ -154,4 +158,51 @@ pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     }
 
     best_match_song
+}
+
+pub fn parse_netease_lyric(s: String, splitter: &str) -> AnyResult<Lrcx> {
+    let mut lrcx: Lrcx = Default::default();
+    let mut lrc_string: &str = &s;
+
+    if s.starts_with('"') {
+        lrc_string = &s[1..s.len() - 1];
+    }
+
+    let lines: Vec<&str> = lrc_string.split(splitter).collect();
+    info!("{} lines", lines.len());
+    let lrc_metatag_regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
+    let lrc_timeline_regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
+
+    for line in lines {
+        let line = line.trim();
+
+        if line.is_empty() {
+            continue;
+        }
+
+        if lrc_metatag_regex.captures(line).is_some() {
+            let re = lrc_metatag_regex.captures(line).unwrap();
+            let tag_name = re.get(0).unwrap().as_str();
+            let tag_value = line[tag_name.len() + 1..].trim().to_string();
+            lrcx.metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
+            continue;
+        }
+        if lrc_timeline_regex.captures(line).is_some() {
+            // let timestamp = {
+            //     let t = lrc_timeline_regex.captures(line).unwrap()
+            //                 .get(0).unwrap().as_str();
+            //     utils::time_tag_to_time_f64(t[1..t.len() - 1].trim())
+            // };
+            let timestamp = lrc_timeline_regex.captures(line).unwrap()
+                             .get(0).unwrap().as_str().to_string();
+            let lyric_line: LyricTimeLine = Default::default();
+            let verse = line[timestamp.to_string().len()..].trim().to_string();
+            lyric_line.line.text = verse;
+            lyric_line.line.length = verse.len() as i64;
+            lyric_line.time = timestamp;
+            lrcx.lyric_body.push(lyric_line);
+            continue;
+        }
+    }
+    Ok(lrcx)
 }

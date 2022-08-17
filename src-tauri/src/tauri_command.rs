@@ -13,7 +13,7 @@ pub fn connect_test(text: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn get_next_inline_lyric(fix_time: f64) -> String {
+pub async fn get_next_inline_lyric_legacy(fix_time: f64) -> String {
 
     let mut player_info = match get_player_info().await{
         Ok(info) => (info),

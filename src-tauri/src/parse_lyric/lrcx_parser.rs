@@ -5,6 +5,7 @@ use log::info;
 use regex::Regex;
 use anyhow::Result as AnyResult;
 
+use crate::api::lyric_line::LyricLine;
 use crate::parse_lyric::utils;
 
 #[derive(Debug, Clone)]
@@ -140,7 +141,7 @@ impl Lrcx {
         self.lyric_body.get(index).cloned()
     }
 
-    pub fn get_full_time_line_by_index(&self, i: usize) -> Option<Vec<&LyricInline>> {
+    pub fn get_full_time_line_by_index(&self, i: usize) -> Vec<&LyricInline> {
         info!("get full time line by index: {}", i);
         let mut index = i;
         let mut full_time_line = vec![self.lyric_body.get(index).unwrap()];
@@ -151,8 +152,7 @@ impl Lrcx {
             info!(" - Find one time line by index: {}", index + 1);
             index += 1;
         }
-
-        Some(full_time_line)
+        full_time_line
     }
 
     pub fn get_first_time_line_by_time(&self, time: f64) -> Option<LyricInline> {
@@ -164,14 +164,31 @@ impl Lrcx {
         None
     }
 
-    pub fn get_full_time_line_by_time(&self, time:f64) -> Option<Vec<&LyricInline>> {
+    pub fn get_next_lyric_by_time(&self, time:f64) -> LyricLine {
         info!("get full time line by time: {}", time);
         let mut index = self.find_time_line_index(time);
 
-        if let Some(i) = index {
-            return self.get_full_time_line_by_index(i)
+        if index.is_none() {
+            return Default::default();
         }
-        None
+
+        let mut result : LyricLine = Default::default();
+        let next_full_lrc = self.get_full_time_line_by_index(index.unwrap());
+        info!("next {}", next_full_lrc.len());
+        if next_full_lrc.len() == 0{
+            result.length = -1;
+        }else if next_full_lrc.len() == 1 {
+            result.text = next_full_lrc.get(0).unwrap().lyric_str();
+        }else {
+            for line in next_full_lrc {
+                if line.lyric_str().starts_with("[tt]"){
+                    let key_frame_str = &line.to_string()[4..];
+                    let key_frame = key_frame_str.split(' ');
+                    unimplemented!()
+                }
+            }
+        }
+        result
     }
 
     pub fn iter(&self) -> std::slice::Iter<LyricInline> {

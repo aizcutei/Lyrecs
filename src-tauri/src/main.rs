@@ -10,6 +10,7 @@ mod player_info;
 mod get_lyrics;
 mod parse_lyric;
 mod tauri_command;
+mod api;
 use std::env;
 use tauri::{SystemTray, SystemTrayEvent};
 use tauri::Manager;
