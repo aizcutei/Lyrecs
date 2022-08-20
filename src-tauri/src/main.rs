@@ -15,13 +15,6 @@ use std::env;
 use tauri::{SystemTray, SystemTrayEvent};
 use tauri::Manager;
 use tauri::{CustomMenuItem, SystemTrayMenu, SystemTrayMenuItem};
-
-use get_lyrics::kugou::{self, decode_lyric, kugou_get_first_lyric};
-use get_lyrics::song_struct::KugouSongLyrics;
-
-use player_info::link_system;
-use get_lyrics::netease;
-
 /* use tauri::Manager;
 use window_vibrancy::{apply_blur, apply_vibrancy, NSVisualEffectMaterial}; */
 use window_shadows::set_shadow;
@@ -86,7 +79,6 @@ fn main() {
     } )
     .invoke_handler(tauri::generate_handler![
       tauri_command::connect_test,
-      tauri_command::get_next_inline_lyric
       ])
     .setup(|app| {
       let win = app.get_window("main").unwrap();

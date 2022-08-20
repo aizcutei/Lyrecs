@@ -5,7 +5,7 @@ use log::info;
 use regex::Regex;
 use anyhow::Result as AnyResult;
 
-use crate::api::lyric_line::LyricLine;
+use crate::api::model::LyricLine;
 use crate::parse_lyric::utils;
 
 #[derive(Debug, Clone)]

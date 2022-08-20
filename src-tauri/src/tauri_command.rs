@@ -1,64 +1,57 @@
-use crate::get_lyrics::kugou::kugou_get_first_lyric;
-use crate::get_lyrics::lyric_file::{activate_lyric, kugou_save_lyric_file};
-use crate::player_info::link_system::get_player_info;
-use log::{warn, info};
-use serde::ser::SerializeStruct;
-use serde::{Serializer, Serialize, Deserialize};
-use serde_json::{Result, Value};
-use crate::parse_lyric::lrcx_parser::{Lrcx};
+use serde::{Serialize, Deserialize};
 
 #[tauri::command]
 pub fn connect_test(text: &str) -> String {
     format!("Hello {}!", text)
 }
 
-#[tauri::command]
-pub async fn get_next_inline_lyric_legacy(fix_time: f64) -> String {
+// #[tauri::command]
+// pub async fn get_next_inline_lyric_legacy(fix_time: f64) -> String {
 
-    let mut player_info = match get_player_info().await{
-        Ok(info) => (info),
-        Err(err) => {
-            warn!("error: {}", err);
-            return "".to_string()
-        },
-    };
+//     let mut player_info = match get_player_info().await{
+//         Ok(info) => (info),
+//         Err(err) => {
+//             warn!("error: {}", err);
+//             return "".to_string()
+//         },
+//     };
 
-    kugou_save_lyric_file(&player_info).await;
-    //make sure player position is positive
-    if player_info.position >= fix_time.abs() {
-        player_info.position += fix_time;
-    }
+//     kugou_save_lyric_file(&player_info).await;
+//     //make sure player position is positive
+//     if player_info.position >= fix_time.abs() {
+//         player_info.position += fix_time;
+//     }
 
-    activate_lyric(&player_info).await
-    .map_or_else(
-        |err|{
-            warn!("error: {}", err);
-            String::from("")
-        },
-        |lrc| {
-            let time = player_info.position;
-            let mut passing = Passing_lrc::new_empty();
+//     activate_lyric(&player_info).await
+//     .map_or_else(
+//         |err|{
+//             warn!("error: {}", err);
+//             String::from("")
+//         },
+//         |lrc| {
+//             let time = player_info.position;
+//             let mut passing = Passing_lrc::new_empty();
 
-            let next_full_lrc = lrc.get_full_time_line_by_time(time).unwrap();
-            info!("next {}", next_full_lrc.len());
-            if next_full_lrc.len() == 0{
-                passing.origin_lrc = "Can not get next lyric".to_owned();
-            }else if next_full_lrc.len() == 1 {
-                passing.origin_lrc = next_full_lrc.get(0).unwrap().lyric_str();
-            }else {
-                for line in next_full_lrc {
-                    if line.lyric_str().starts_with("[tt]"){
-                        let key_frame_str = &line.to_string()[4..];
-                        let key_frame = key_frame_str.split(' ');
-                        unimplemented!()
-                    }
-                }
-            }
+//             let next_full_lrc = lrc.get_full_time_line_by_time(time).unwrap();
+//             info!("next {}", next_full_lrc.len());
+//             if next_full_lrc.len() == 0{
+//                 passing.origin_lrc = "Can not get next lyric".to_owned();
+//             }else if next_full_lrc.len() == 1 {
+//                 passing.origin_lrc = next_full_lrc.get(0).unwrap().lyric_str();
+//             }else {
+//                 for line in next_full_lrc {
+//                     if line.lyric_str().starts_with("[tt]"){
+//                         let key_frame_str = &line.to_string()[4..];
+//                         let key_frame = key_frame_str.split(' ');
+//                         unimplemented!()
+//                     }
+//                 }
+//             }
             
-            serde_json::to_string(&passing).unwrap()
-        })
+//             serde_json::to_string(&passing).unwrap()
+//         })
     
-}
+// }
 
 //test case
 

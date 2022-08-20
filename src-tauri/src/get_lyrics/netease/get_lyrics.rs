@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::{Write, Read};
+
 use regex::Regex;
 use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
 use serde::Deserialize;
@@ -7,17 +10,19 @@ use anyhow::Result as AnyResult;
 use strsim::levenshtein;
 use log::info;
 
-use crate::api::lyric_line::LyricTimeLine;
-use crate::get_lyrics::song_struct::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
-use crate::api::lyric_line::{Lrcx, IDTag};
-use crate::parse_lyric::utils;
+use crate::get_lyrics::lyric_file::{lyric_file_path, lyric_file_exists};
+use crate::get_lyrics::netease::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
+use crate::api::model::{Lrcx, IDTag, LyricTimeLine};
+use crate::parse_lyric::utils::time_tag_to_time_f64;
+use crate::player_info::link_system::PlayerInfo;
 
-use super::song_struct::Song;
+use super::super::song::Song;
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
 const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
+
 
 async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
 
@@ -130,7 +135,6 @@ pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     for song in song_list {
         let listed_song_name = format!("{} {}", song.artist, song.name);
         let distance = levenshtein(&listed_song_name, &song_name.name);
-        //println!("{} {} {}", listed_song_name, song_name.name, distance);
         if distance < best_match_distance {
             best_match_song = song.to_owned();
             best_match_distance = distance;
@@ -188,21 +192,60 @@ pub fn parse_netease_lyric(s: String, splitter: &str) -> AnyResult<Lrcx> {
             continue;
         }
         if lrc_timeline_regex.captures(line).is_some() {
-            // let timestamp = {
-            //     let t = lrc_timeline_regex.captures(line).unwrap()
-            //                 .get(0).unwrap().as_str();
-            //     utils::time_tag_to_time_f64(t[1..t.len() - 1].trim())
-            // };
             let timestamp = lrc_timeline_regex.captures(line).unwrap()
                              .get(0).unwrap().as_str().to_string();
-            let lyric_line: LyricTimeLine = Default::default();
+            let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
-            lyric_line.line.text = verse;
+            lyric_line.line.text = verse.clone();
             lyric_line.line.length = verse.len() as i64;
-            lyric_line.time = timestamp;
+            lyric_line.start = time_tag_to_time_f64(timestamp.trim_start_matches('[').
+                                                    to_string().trim_end_matches(']'));
             lrcx.lyric_body.push(lyric_line);
             continue;
         }
     }
+    lrcx.cal_duration_from_start();
     Ok(lrcx)
+}
+
+pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
+    info!("getting default song");
+
+    let mut search_song = NeteaseSong::new_empty();
+    search_song.name = song.title.clone().replace('&', "");
+    search_song.artist = song.artist.clone().replace('&', "");
+    //remove & in the keyword
+
+    let default_song = get_best_match_song(&search_song).await;
+    info!("default song {} \n getting lyric", default_song.name);
+
+    let song_lyrics = get_song_lyric(&default_song).await?;
+    info!("song_lyrics {:?}", song_lyrics);
+
+    let mut lrcx = parse_netease_lyric(song_lyrics.get_original_lyric().unwrap(), "\n")?;
+    info!("writing lyric file of length {}", lrcx.lyric_body.len());
+
+    let mut file = File::create(lyric_file_path(song))?;
+    
+    let mut default_timeline: LyricTimeLine = Default::default();
+    if lrcx.lyric_body.len() == 0 {
+        default_timeline.line.set_text("No Lyric for this song".to_string());
+    } 
+    lrcx.lyric_body.insert(0, default_timeline);
+    let serial = serde_json::to_string(&lrcx)?;
+    write!(file, "{}", serial)?;
+
+    Ok(())
+}
+
+pub async fn get_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
+    if !lyric_file_exists(song) {
+        info!("lyric file does not exist");
+        save_lyric_file(song).await?;
+    }
+    let lyric_path = lyric_file_path(song);
+    let mut file = File::open(lyric_path)?;
+    let mut lyric = String::new();
+    file.read_to_string(&mut lyric)?;
+    Ok(lyric)
 }
