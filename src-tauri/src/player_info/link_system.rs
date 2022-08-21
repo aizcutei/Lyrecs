@@ -71,7 +71,7 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         return Ok(player_info)
     }
     Err(anyhow::anyhow!("Apple Music is not running"))
-    
+
 }
 
 
@@ -90,7 +90,7 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
     let track_info = &current_session.TryGetMediaPropertiesAsync()?.await?;
     let timeline = &current_session.GetTimelineProperties()?;
     let status = &current_session.GetPlaybackInfo()?.PlaybackStatus()?.0;
-    
+
     Ok(PlayerInfo {
         state: status.to_string(),
         title: track_info.Title()?.to_string(),

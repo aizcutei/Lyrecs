@@ -10,7 +10,7 @@ use crate::get_lyrics::song::Song;
 pub struct KugouSong {
     pub name: String,
     pub artist: String,
-    pub album: String, 
+    pub album: String,
     pub hash: String,
     pub id: String,
     pub access_key: String,

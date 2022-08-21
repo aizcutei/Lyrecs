@@ -53,7 +53,7 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList
         let song = NeteaseSong::new(song);
         song_list.push(song);
     }
-    
+
     Ok(song_list)
 }
 
@@ -62,7 +62,7 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
     if song.is_empty() {
         return Err(anyhow::anyhow!("No search result"));
     }
-    
+
     let requrl = LYRIC_URL.to_string() + &song.id.to_string();
 
     let client = reqwest::Client::new();
@@ -128,7 +128,7 @@ pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     if song_list.len() == 0 {
         return NeteaseSong::new_empty();
     }
-    
+
     let mut best_match_song = song_list[0].to_owned();
     let mut best_match_distance = usize::MAX;
 
@@ -226,11 +226,11 @@ pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     info!("writing lyric file of length {}", lrcx.lyric_body.len());
 
     let mut file = File::create(lyric_file_path(song))?;
-    
+
     let mut default_timeline: LyricTimeLine = Default::default();
     if lrcx.lyric_body.len() == 0 {
         default_timeline.line.set_text("No Lyric for this song".to_string());
-    } 
+    }
     lrcx.lyric_body.insert(0, default_timeline);
     let serial = serde_json::to_string(&lrcx)?;
     write!(file, "{}", serial)?;

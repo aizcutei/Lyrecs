@@ -93,7 +93,7 @@ pub struct LyricLine {
     pub length: i64,
     pub word_timeline : Vec<WordTimeline>,
     pub translation: String,
-    pub pronunciation: String, 
+    pub pronunciation: String,
 }
 
 impl LyricLine {

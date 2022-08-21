@@ -25,7 +25,7 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
                 warn!("error: {}", err);
                 Default::default()
             },
-            |lrc| {            
+            |lrc| {
                 lrc.get_next_lyric_by_time(player_info.position)
             })
         ).to_string()
@@ -33,9 +33,7 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use log::info;
     use super::get_next_inline_lyrics;
-
 
     #[test]
     fn test_whole() {

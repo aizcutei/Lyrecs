@@ -36,7 +36,7 @@ impl LyricInline {
     pub fn lyric_str(&self) -> String {
         self.verse.clone()
     }
-    
+
 }
 
 impl IDTag {

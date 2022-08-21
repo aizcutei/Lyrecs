@@ -31,7 +31,7 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> 
     let resp = client.get(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)
         .send().await?;
-    
+
     info!("received song list");
 
     let resp_str = resp.text().await.unwrap();
@@ -102,7 +102,7 @@ pub async fn get_default_lyric_item(lyric_list: &KugouSongList) -> KugouSong {
 }
 
 pub async fn get_song_lyric(song: &KugouSong) -> AnyResult<KugouSongLyrics> {
-    
+
     let requrl = LYRIC_URL.to_string() + &song.id + "&accesskey=" + &song.access_key;
 
     let client = reqwest::Client::new();
@@ -120,7 +120,7 @@ pub async fn get_song_lyric(song: &KugouSong) -> AnyResult<KugouSongLyrics> {
     let mut lyric = KugouSongLyrics::new(&json);
 
     lyric = decode_lyric(&mut lyric).await?;
-    
+
     Ok(lyric)
 }
 
@@ -146,7 +146,7 @@ pub async fn decode_lyric(lyric: &mut KugouSongLyrics) -> AnyResult<KugouSongLyr
     }
 
     //println!("{:?}", String::from_utf8_lossy(&input[..]));
-    
+
     let mut decoder = ZlibDecoder::new(&input[..]);
     let mut result = String::new();
     decoder.read_to_string(&mut result).unwrap();
@@ -175,14 +175,14 @@ pub async fn kugou_save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     info!("writing lyric file of length");
 
     let mut file = File::create(lyric_file_path(song))?;
-    /* 
+    /*
     if lrcx.is_empty() {
         file.write_all(b"[00:00.000] No Lyric for this song\n[00:10.000] \xE2\x99\xAB ~ ~ ~")?; //add a start line
     } else {
         file.write_all(b"[00:00.000] \n")?; //add a start line
     }
-    
-    
+
+
     for line in lrcx.iter() {
         file.write_all(line.to_string().as_bytes())?;
         file.write_all(b"\n")?;
@@ -208,6 +208,6 @@ mod tests {
         lrc.content = encryted.to_string();
 
         decode_lyric(&mut lrc);
-        
+
     }
 }
