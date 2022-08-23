@@ -76,7 +76,7 @@ fn main() {
                     let setting_window = tauri::WindowBuilder::new(
                     app,
                     "setting",
-                    tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
+                    tauri::WindowUrl::App("setting".into())
                     ).build().unwrap();
                 }
                 _ => {}

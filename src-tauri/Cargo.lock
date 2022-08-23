@@ -72,6 +72,7 @@ dependencies = [
  "strsim",
  "tauri",
  "tauri-build",
+ "tauri-plugin-positioner",
  "tauri-plugin-store",
  "tauri-plugin-window-state",
  "tokio",
@@ -3134,6 +3135,18 @@ dependencies = [
  "syn",
  "tauri-codegen",
  "tauri-utils",
+]
+
+[[package]]
+name = "tauri-plugin-positioner"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c06e0a1f9650fec272f5e4fb2b60863cd9f5dde20ee80e085dd0a99b39b9f8e4"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "tauri",
 ]
 
 [[package]]
