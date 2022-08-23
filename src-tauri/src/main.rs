@@ -1,6 +1,6 @@
 #![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
+all(not(debug_assertions), target_os = "windows"),
+windows_subsystem = "windows"
 )]
 
 #[macro_use]
@@ -18,75 +18,82 @@ use tauri::{CustomMenuItem, SystemTrayMenu, SystemTrayMenuItem};
 /* use tauri::Manager;
 use window_vibrancy::{apply_blur, apply_vibrancy, NSVisualEffectMaterial}; */
 use window_shadows::set_shadow;
+use tauri_plugin_store::{PluginBuilder, StoreBuilder};
 use env_logger;
 
 fn main() {
-  //env::set_var("RUST_BACKTRACE", "1");
+//env::set_var("RUST_BACKTRACE", "1");
 
-  env_logger::init();
-
-
-  let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-  let setting = CustomMenuItem::new("setting".to_string(), "Setting");
-  let tray_menu = SystemTrayMenu::new()
-    .add_item(setting)
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(quit);
-  let tray = SystemTray::new().with_menu(tray_menu);
+    env_logger::init();
 
 
-  let app = tauri::Builder::default()
-    // Blur effect
-    /* .setup(|app| {
-      let win = app.get_window("main").unwrap();
+    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let setting = CustomMenuItem::new("setting".to_string(), "Setting");
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(setting)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(quit);
+    let tray = SystemTray::new().with_menu(tray_menu);
 
-      #[cfg(target_os = "macos")]
-      apply_vibrancy(&win, NSVisualEffectMaterial::AppearanceBased)
-        .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+    let setting_data = StoreBuilder::new(".settings".parse().unwrap())
+        .default("Test-Item".to_string(), "Test-Value".into())
+        .build();
 
-      #[cfg(target_os = "windows")]
-      apply_blur(&win, Some((18, 18, 18, 125)))
-        .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
 
-      Ok(())
-    }) */
-    .system_tray(tray)
-    .on_system_tray_event(|app, event|match event {
-      SystemTrayEvent::LeftClick {
-        position: _,
-        size: _,
-        ..
-      } => {
-        println!("system tray received a left click");
-      }
 
-      SystemTrayEvent::MenuItemClick { id, .. } => {
-        match id.as_str() {
-          "quit" => {
-            std::process::exit(0);
-          }
-          "setting" => {
-            let setting_window = tauri::WindowBuilder::new(
-              app,
-              "setting",
-              tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
-            ).build().unwrap();
-          }
-          _ => {}
-        }
-      }
-      _ => {}
-    } )
-    .invoke_handler(tauri::generate_handler![
-      tauri_command::connect_test,
-      ])
-    .setup(|app| {
-      let win = app.get_window("main").unwrap();
-      set_shadow(&win, false).expect("Unsupported platform!");
-      Ok(())
-    }) // Shadow effect
-    .run(tauri::generate_context!())
-    .expect("Error while running tauri application in main");
+    let app = tauri::Builder::default()
+        // Blur effect
+        /* .setup(|app| {
+        let win = app.get_window("main").unwrap();
+
+        #[cfg(target_os = "macos")]
+        apply_vibrancy(&win, NSVisualEffectMaterial::AppearanceBased)
+            .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+
+        #[cfg(target_os = "windows")]
+        apply_blur(&win, Some((18, 18, 18, 125)))
+            .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+
+        Ok(())
+        }) */
+        .plugin(PluginBuilder::default().stores([setting_data]).freeze().build())
+        .system_tray(tray)
+        .on_system_tray_event(|app, event|match event {
+            SystemTrayEvent::LeftClick {
+                position: _,
+                size: _,
+                ..
+            } => {
+                println!("system tray received a left click");
+            }
+
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                match id.as_str() {
+                "quit" => {
+                    std::process::exit(0);
+                }
+                "setting" => {
+                    let setting_window = tauri::WindowBuilder::new(
+                    app,
+                    "setting",
+                    tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
+                    ).build().unwrap();
+                }
+                _ => {}
+                }
+            }
+            _ => {}
+            } )
+        .invoke_handler(tauri::generate_handler![
+            tauri_command::connect_test,
+            ])
+        .setup(|app| {
+            let win = app.get_window("main").unwrap();
+            set_shadow(&win, false).expect("Unsupported platform!");
+            Ok(())
+            }) // Shadow effect
+        .run(tauri::generate_context!())
+        .expect("Error while running tauri application in main");
 
 
 

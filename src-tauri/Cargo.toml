@@ -34,9 +34,14 @@ env_logger = "0.9.0"
 strsim = "0.10.0"
 base64 = "0.13.0"
 flate2 = "1.0"
+tauri-plugin-window-state = "0.1"
+
+[dependencies.tauri-plugin-store]
+git = "https://github.com/tauri-apps/tauri-plugin-store"
+branch = "dev"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.38.0",features = [
+windows = { version = "0.39.0",features = [
     "Media_Control",
     "Media_Playback",
     "Foundation",
