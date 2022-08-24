@@ -193,7 +193,7 @@ pub fn parse_netease_lyric(s: String, splitter: &str) -> AnyResult<Lrcx> {
         }
         if lrc_timeline_regex.captures(line).is_some() {
             let timestamp = lrc_timeline_regex.captures(line).unwrap()
-                             .get(0).unwrap().as_str().to_string();
+                .get(0).unwrap().as_str().to_string();
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
             lyric_line.line.text = verse.clone();

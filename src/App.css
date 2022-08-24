@@ -1,88 +1,187 @@
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none;
+display: none;
 }
 
 /* Hide scrollbar for IE, Edge add Firefox */
 .scrollbar-hidden {
-  -ms-overflow-style: none;
-  scrollbar-width: none; /* Firefox */
+-ms-overflow-style: none;
+scrollbar-width: none; /* Firefox */
 }
 .App {
-  text-align: center;
+text-align: center;
 }
 
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+height: 40vmin;
+pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
+.App-logo {
     animation: App-logo-spin infinite 20s linear;
-  }
+}
 }
 
 #lyric{
-  font-size: 2em;
-  font-weight: bold;
-  color: gray;
-  text-shadow: 1px 0 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff, -1px 0 0 #fff,
+font-size: 2em;
+font-weight: bold;
+color: gray;
+text-shadow: 1px 0 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff, -1px 0 0 #fff,
     0 1px 10px #000;
 }
 
 .App-header {
-  background-color: rgba(0, 0, 0, 0.5);
-  user-select: none;
-  height: full;
-  width: full;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-  margin: 0px;
-  padding: 0px;
-  border-radius: 10px;
-  //border: 0px solid black;
-  //shadow: 0px 0px 5px 5px black;
+background-color: rgba(0, 0, 0, 0.5);
+user-select: none;
+height: full;
+width: full;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+font-size: calc(10px + 2vmin);
+color: white;
+margin: 0px;
+padding: 0px;
+border-radius: 10px;
+//border: 0px solid black;
+//shadow: 0px 0px 5px 5px black;
 }
 
 .App-link {
-  color: #61dafb;
+color: #61dafb;
 }
 
 @keyframes App-logo-spin {
-  from {
+from {
     transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
-
-button {
-  font-size: calc(10px + 2vmin);
+to {
+    transform: rotate(360deg);
+}
 }
 
 .titlebar {
-    height: 30px;
-    background: #329ea3;
+    height: 28px;
+    background: #f1f1f1;
     user-select: none;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-  }
-  .titlebar-button {
+    border-radius: 10px 10px 0px 0px;
+}
+
+
+.traffic-lights {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 30px;
-    height: 30px;
-  }
-  .titlebar-button:hover {
-    background: #5bbec3;
-  }
+    margin: 0 0 0 8px;
+}
+.focus .traffic-lights > .traffic-light-close, .traffic-lights:hover > .traffic-light-close, .traffic-lights:active > .traffic-light-close {
+    background-color: #ff6159;
+}
+.focus .traffic-lights > .traffic-light-close:active:hover, .traffic-lights:hover > .traffic-light-close:active:hover, .traffic-lights:active > .traffic-light-close:active:hover {
+    background-color: #bf4942;
+}
+.focus .traffic-lights > .traffic-light-minimize, .traffic-lights:hover > .traffic-light-minimize, .traffic-lights:active > .traffic-light-minimize {
+    background-color: #ffbd2e;
+}
+.focus .traffic-lights > .traffic-light-minimize:active:hover, .traffic-lights:hover > .traffic-light-minimize:active:hover, .traffic-lights:active > .traffic-light-minimize:active:hover {
+    background-color: #bf8e22;
+}
+.focus .traffic-lights > .traffic-light-maximize, .traffic-lights:hover > .traffic-light-maximize, .traffic-lights:active > .traffic-light-maximize {
+    background-color: #28c941;
+}
+.focus .traffic-lights > .traffic-light-maximize:active:hover, .traffic-lights:hover > .traffic-light-maximize:active:hover, .traffic-lights:active > .traffic-light-maximize:active:hover {
+    background-color: #1d9730;
+}
+.traffic-lights > .traffic-light:before, .traffic-lights > .traffic-light:after {
+    visibility: hidden;
+}
+.traffic-lights:hover > .traffic-light:before, .traffic-lights:hover > .traffic-light:after, .traffic-lights:active > .traffic-light:before, .traffic-lights:active > .traffic-light:after {
+    visibility: visible;
+}
+
+.traffic-light {
+    border-radius: 100%;
+    padding: 0;
+    height: 12px;
+    width: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+    margin-right: 7px;
+    background-color: #ddd;
+    position: relative;
+    outline: none;
+}
+.traffic-light:before, .traffic-light:after {
+    content: "";
+    position: absolute;
+    border-radius: 1px;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+}
+.traffic-light-close:before, .traffic-light-close:after {
+    background-color: #4d0000;
+    width: 8px;
+    height: 1px;
+}
+.traffic-light-close:before {
+    transform: rotate(45deg);
+}
+.traffic-light-close:after {
+    transform: rotate(-45deg);
+}
+.traffic-light-close:active:hover:before, .traffic-light-close:active:hover:after {
+    background-color: #190000;
+}
+.traffic-light-minimize:before {
+    background-color: #995700;
+    width: 8px;
+    height: 1px;
+}
+.traffic-light-minimize:active:hover:before {
+    background-color: #592800;
+}
+.traffic-light-maximize:before {
+    background-color: #006500;
+    width: 6px;
+    height: 6px;
+}
+.traffic-light-maximize:after {
+    background-color: #28c941;
+    width: 10px;
+    height: 2px;
+    transform: rotate(45deg);
+}
+.traffic-light-maximize:active:hover:before {
+    background-color: #003200;
+}
+.traffic-light-maximize:active:hover:after {
+    background-color: #1d9730;
+}
+
+
+
+.setting-body {
+    z-index: -1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: white;
+    height: 100%;
+    width: 100%;
+    border-radius: 10px 10px 10px 10px;
+}
+
+.setting-container {
+    position:  relative;
+    top: 20px;
+}
