@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use serde_json::Value;
 
-use crate::get_lyrics::song::Song;
+use crate::get_lyrics::song::{RemoteSongTrait};
 
 //----- Netease ------
 #[derive(Debug, Default, Clone)]
@@ -56,7 +56,7 @@ impl NeteaseSongList {
     }
 }
 
-impl Song for NeteaseSong {
+impl RemoteSongTrait for NeteaseSong {
     fn new(song: &Value) -> Self {
         NeteaseSong {
             name: song["name"].as_str().unwrap().to_string(),

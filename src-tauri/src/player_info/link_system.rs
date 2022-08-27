@@ -3,13 +3,12 @@ use std::process;
 use anyhow::Result as AnyResult;
 use serde_json::Value;
 use log::{info, warn};
+use crate::get_lyrics::song::Song;
 
 #[derive(Debug, Default, Clone)]
 pub struct PlayerInfo {
+	pub track: Song,
     pub state: String,
-    pub title: String,
-    pub artist: String,
-    pub album: String,
     pub duration: f64,
     pub position: f64,
 }
@@ -60,10 +59,12 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         }
 
         let player_info = PlayerInfo {
+            track: Song {
+                title: player_info_result["title"].as_str().unwrap_or("").to_string(),
+                artist: player_info_result["artist"].as_str().unwrap_or("").to_string(),
+                album: player_info_result["album"].as_str().unwrap_or("").to_string(),
+            },
             state: player_info_result["state"].as_str().unwrap().to_string(),
-            title: player_info_result["title"].as_str().unwrap().to_string(),
-            artist: player_info_result["artist"].as_str().unwrap().to_string(),
-            album: player_info_result["album"].as_str().unwrap().to_string(),
             duration: player_info_result["duration"].as_f64().unwrap(),
             position: player_info_result["position"].as_f64().unwrap(),
         };
@@ -142,7 +143,7 @@ mod tests {
                 println!("ttttttt");
                 let a = get_player_info().await;
                 match a {
-                    Ok(res) => {println!("title{} {} {}", res.title, res.album, res.artist);},
+                    Ok(res) => {println!("title{} {} {}", res.track.title, res.track.album, res.track.artist);},
                     Err(err) => {println!("err{}", err.to_string())},
                 }
                 println!("sssssss");

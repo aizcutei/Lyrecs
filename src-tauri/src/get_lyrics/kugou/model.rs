@@ -4,7 +4,7 @@ use std::ops::Index;
 
 use serde_json::Value;
 
-use crate::get_lyrics::song::Song;
+use crate::get_lyrics::song::RemoteSongTrait;
 
 #[derive(Debug, Clone)]
 pub struct KugouSong {
@@ -19,7 +19,7 @@ pub struct KugouSong {
 #[derive(Debug, Clone)]
 pub struct KugouSongList (Vec<KugouSong>);
 
-impl Song for KugouSong {
+impl RemoteSongTrait for KugouSong {
     fn new(song: &Value) -> Self {
         let mut name = "".to_string();
         if song.get("name").is_none() {
