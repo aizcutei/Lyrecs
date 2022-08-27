@@ -1,4 +1,5 @@
 import { WebviewWindow } from '@tauri-apps/api/window'
+import { Store } from 'tauri-plugin-store-api'
 import { useState } from 'react'
 
 export default function Setting() {
@@ -11,6 +12,10 @@ export default function Setting() {
         }else{
             setFocusClassName("titlebar")
         }
+    })
+
+    ReadSetting().then( result => {
+        console.log(result)
     })
 
     return (<>
@@ -34,7 +39,6 @@ export default function Setting() {
 }
 
 function Close() {
-
     const settingWindow = WebviewWindow.getByLabel('setting')
 
     if (settingWindow) {
@@ -43,7 +47,6 @@ function Close() {
 }
 
 async function Maxinize() {
-
     const settingWindow = WebviewWindow.getByLabel('setting')
 
     if (settingWindow) {
@@ -74,4 +77,38 @@ async function FocusMonitor() {
         });
     }
     return focus
+}
+
+
+async function ReadSetting() {
+    const store = new Store('.settings')
+    const setting = await store.get('Test-Item')
+    return setting
+}
+
+interface SettingData {
+    //Window Related
+    blurEffect: boolean,
+    raidus: number,
+    opacity: number,
+
+    //Text Related
+    textFont: string,
+    baseTextSize: number,
+    baseTextColor: string,
+    baseTextOutlineEnabled: boolean,
+    baseTextOutlineColor: string,
+    baseTextOutlineSize: number,
+    baseTextOutlineBlur: number,
+    overTextSize: number,
+    overTextColor: string,
+    overTextOutlineEnabled: boolean,
+    overTextOutlineColor: string,
+    overTextOutlineSize: number,
+
+    //Background Related
+    backgroundEnabled: boolean,
+    backgroundColor: string,
+    backgroundImage: string,
+    backgroundOpacity: number,
 }

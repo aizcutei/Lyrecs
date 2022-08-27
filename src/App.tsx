@@ -36,14 +36,14 @@ function App() {
         })
 
     return (
-        <div className="App">
-        <header>
-            <Routes>
-                <Route path="/" element={<Displayer />} />
-                <Route path="/setting" element={<Setting />} />
-                <Route path="/search" element={<Search />} />
-            </Routes>
-        </header>
+        <div>
+            <header>
+                <Routes>
+                    <Route path="/" element={<Displayer />} />
+                    <Route path="/setting" element={<Setting />} />
+                    <Route path="/search" element={<Search />} />
+                </Routes>
+            </header>
         </div>
     )
 }

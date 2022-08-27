@@ -13,7 +13,7 @@ pub fn vibrancy_effect(app: &mut App) -> std::result::Result<(), Box<dyn std::er
     let main_window = app.get_window("main").unwrap();
 
     #[cfg(target_os = "macos")]
-    apply_vibrancy(&main_window, NSVisualEffectMaterial::ContentBackground)
+    apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, 1, 10.0)
         .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
     #[cfg(target_os = "windows")]
