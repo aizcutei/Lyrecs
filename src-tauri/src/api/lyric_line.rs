@@ -1,4 +1,6 @@
-use crate::get_lyrics::lyric_file::activate_lyric;
+use crate::get_lyrics::kugou::model::KugouSong;
+use crate::get_lyrics::lyric_file::LyricSource;
+use crate::get_lyrics::{lyric_file::activate_lyric, netease::model::NeteaseSong};
 use crate::player_info::link_system::get_player_info;
 use log::{warn};
 use serde_json::{json};
@@ -18,8 +20,13 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
     if player_info.position >= fix_time.abs() {
         player_info.position += fix_time;
     }
-
-    let res: Result<Lrcx, anyhow::Error> = activate_lyric(&player_info).await;
+    let n = NeteaseSong{
+        name:player_info.track.title.clone(),
+        artist:player_info.track.artist.clone(),
+        album:player_info.track.album.clone(),
+        id: "".to_string(),
+    };
+    let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
     json!(res.map_or_else(
             |err|{
                 warn!("error: {}", err);
@@ -33,15 +40,52 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::get_next_inline_lyrics;
+    use log::warn;
+    use serde_json::json;
+
+    use crate::{api::model::Lrcx, get_lyrics::{lyric_file::{activate_lyric, LyricSource}, netease::model::NeteaseSong, kugou::model::KugouSong}, player_info::link_system::get_player_info};
 
     #[test]
     fn test_whole() {
         //create an tokio async runtime to run get_next_inline_lyrics function
         let mut runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
-            let result = get_next_inline_lyrics(0.0).await;
-            println!("result{}", result);
+
+        let mut player_info = match get_player_info().await{
+            Ok(info) => (info),
+            Err(err) => {
+                warn!("error: {}", err);
+                return Default::default()
+            },
+        };
+        let n = NeteaseSong{
+            name:player_info.track.title.clone(),
+            artist:player_info.track.artist.clone(),
+            album:player_info.track.album.clone(),
+            id: "".to_string(),
+        };
+
+        let k = KugouSong{
+            name: player_info.track.title.clone(),
+            artist: player_info.track.artist.clone(),
+            album: player_info.track.album.clone(),
+            hash: Default::default(),
+            id: Default::default(),
+            access_key: Default::default(),
+           };
+
+        let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
+        let res = json!(res.map_or_else(
+            |err|{
+                println!("error: {}", err);
+                Default::default()
+            },
+            |lrc| {
+                lrc.get_next_lyric_by_time(player_info.position)
+            })
+        ).to_string();
+            // let result = get_next_inline_lyrics(0.0).await;
+            println!("result{}", res);
         });
     }
 }

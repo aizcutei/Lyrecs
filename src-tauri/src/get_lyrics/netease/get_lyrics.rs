@@ -1,9 +1,9 @@
+use std::any;
 use std::fs::File;
 use std::io::{Write, Read};
 
 use regex::Regex;
 use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
-use serde::Deserialize;
 use serde_json::Value;
 use anyhow::Ok;
 use anyhow::Result as AnyResult;
@@ -14,9 +14,7 @@ use crate::get_lyrics::lyric_file::{lyric_file_path, lyric_file_exists};
 use crate::get_lyrics::netease::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
 use crate::api::model::{Lrcx, IDTag, LyricTimeLine};
 use crate::parse_lyric::utils::time_tag_to_time_f64;
-use crate::player_info::link_system::PlayerInfo;
-
-use super::super::song::Song;
+use crate::get_lyrics::song::{RemoteSongTrait};
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
 const COOKIE_STRING: &str = "NMTID=1";
@@ -28,7 +26,9 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList
 
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder().proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
+    .proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
+    .build().unwrap();
 
     let resp = client.post(requrl)
         .header(COOKIE, COOKIE_STRING)
@@ -208,11 +208,11 @@ pub fn parse_netease_lyric(s: String, splitter: &str) -> AnyResult<Lrcx> {
     Ok(lrcx)
 }
 
-pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
+pub async fn save_lyric_file(song: &NeteaseSong) -> AnyResult<()> {
     info!("getting default song");
 
     let mut search_song = NeteaseSong::new_empty();
-    search_song.name = song.title.clone().replace('&', "");
+    search_song.name = song.name.clone().replace('&', "");
     search_song.artist = song.artist.clone().replace('&', "");
     //remove & in the keyword
 
@@ -225,10 +225,10 @@ pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     let mut lrcx = parse_netease_lyric(song_lyrics.get_original_lyric().unwrap(), "\n")?;
     info!("writing lyric file of length {}", lrcx.lyric_body.len());
 
-    let mut file = File::create(lyric_file_path(song))?;
+    let mut file = File::create(lyric_file_path(&song.artist, &song.name))?;
 
     let mut default_timeline: LyricTimeLine = Default::default();
-    if lrcx.lyric_body.len() == 0 {
+    if lrcx.lyric_body.is_empty() {
         default_timeline.line.set_text("No Lyric for this song".to_string());
     }
     lrcx.lyric_body.insert(0, default_timeline);
@@ -238,14 +238,3 @@ pub async fn save_lyric_file(song: &PlayerInfo) -> AnyResult<()> {
     Ok(())
 }
 
-pub async fn get_lyric_file(song: &PlayerInfo) -> AnyResult<String> {
-    if !lyric_file_exists(song) {
-        info!("lyric file does not exist");
-        save_lyric_file(song).await?;
-    }
-    let lyric_path = lyric_file_path(song);
-    let mut file = File::open(lyric_path)?;
-    let mut lyric = String::new();
-    file.read_to_string(&mut lyric)?;
-    Ok(lyric)
-}
