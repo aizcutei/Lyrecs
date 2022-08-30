@@ -72,7 +72,7 @@ mod tests {
             hash: Default::default(),
             id: Default::default(),
             access_key: Default::default(),
-           };
+            };
 
         let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
         let res = json!(res.map_or_else(

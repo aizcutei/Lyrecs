@@ -24,6 +24,7 @@ export default defineConfig({
         Unocss({
             rules: [
                 ['text-stroke-black', { '-webkit-text-stroke-color': 'black' }],
+                ['content-text', {'content': `attr(data-text)`}],
                 [/^content-text-(\S+)$/, ([ ,d]) => ({ 'content' : `${d}`})],
                 [/^text-outline-(\d+)-(\d+)-(\S+)$/, ([, d, w, S]) => ({ 'text-shadow' :
                     `${d as unknown as number * 1}px 0 ${w}px ${S},

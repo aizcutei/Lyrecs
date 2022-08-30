@@ -26,8 +26,9 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList
 
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 
-    let client = reqwest::Client::builder().proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
-    .proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
+    let client = reqwest::Client::builder()
+    //.proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
+    //.proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
     .build().unwrap();
 
     let resp = client.post(requrl)

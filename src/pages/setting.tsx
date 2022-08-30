@@ -13,10 +13,11 @@ export default function Setting() {
             setFocusClassName("titlebar")
         }
     })
-
+    /*
     ReadSetting().then( result => {
         console.log(result)
     })
+    */
 
     return (<>
         <div>
@@ -79,13 +80,13 @@ async function FocusMonitor() {
     return focus
 }
 
-
+/*
 async function ReadSetting() {
     const store = new Store('.settings')
     const setting = await store.get('Test-Item')
     return setting
 }
-
+*/
 interface SettingData {
     //Window Related
     blurEffect: boolean,
@@ -111,4 +112,7 @@ interface SettingData {
     backgroundColor: string,
     backgroundImage: string,
     backgroundOpacity: number,
+
+    //Backend Related
+    defaultService: string,
 }
