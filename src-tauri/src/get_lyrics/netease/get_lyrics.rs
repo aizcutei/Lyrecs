@@ -228,7 +228,7 @@ fn parse_lyric_text(lrc_string: &str, splitter: &str) -> Vec<LyricTimeLine> {
         let line = line.trim();
         if LRC_TIMELINE_REGEX.captures(line).is_some() {
             let timestamp = LRC_TIMELINE_REGEX.captures(line).unwrap()
-                             .get(0).unwrap().as_str().to_string();
+                            .get(0).unwrap().as_str().to_string();
 
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();

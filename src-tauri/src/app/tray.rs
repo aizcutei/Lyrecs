@@ -62,7 +62,7 @@ pub fn tray_handler(app: &AppHandle, event: SystemTrayEvent) {
                             app,
                             "setting",
                             tauri::WindowUrl::App("setting".into())
-                            ).title("Setting").decorations(false).resizable(true).transparent(true).center().build().unwrap();
+                            ).title("Setting").decorations(true).resizable(true).transparent(false).center().build().unwrap();
                     }
                 }
                 _ => {}
