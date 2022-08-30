@@ -1,7 +1,7 @@
 {
-  "name": "Lyrecs",
+  "name": "lyrecs",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -15,7 +15,8 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "6",
     "tauri-plugin-positioner-api": "^0.2.7",
-    "tauri-plugin-store-api": "https://github.com/tauri-apps/tauri-plugin-store#dev"
+    "tauri-plugin-store-api": "https://github.com/tauri-apps/tauri-plugin-store#dev",
+    "unocss": "^0.45.12"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.0.3",

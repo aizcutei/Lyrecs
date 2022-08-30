@@ -1,9 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[tauri::command]
-pub fn connect_test(text: &str) -> String {
-    format!("Hello {}!", text)
-}
+
 
 // #[tauri::command]
 // pub async fn get_next_inline_lyric_legacy(fix_time: f64) -> String {
