@@ -1,4 +1,4 @@
-use std::any;
+use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{Write, Read};
 
@@ -20,7 +20,10 @@ const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
-
+lazy_static!(
+    static ref LRC_METATAG_REGEX: Regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
+    static ref LRC_TIMELINE_REGEX: Regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
+);
 
 async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
 
@@ -165,48 +168,79 @@ pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     best_match_song
 }
 
-pub fn parse_netease_lyric(s: String, splitter: &str) -> AnyResult<Lrcx> {
-    let mut lrcx: Lrcx = Default::default();
-    let mut lrc_string: &str = &s;
+pub fn parse_netease_lyric(s: &NeteaseSongLyrics) -> AnyResult<Lrcx> {
+    let mut lrcx = {
+        let mut lrcx: Lrcx = Default::default();
+        let lrc_metatag = parse_metatag(s.lyric.clone().trim_start_matches('"'), "\n");
+        let mut original = parse_lyric_text(s.lyric.clone().trim_start_matches('"'), "\n");
+        let translation = parse_lyric_text(s.tlyric.clone().trim_start_matches('"'), "\n");
+        let pronuce = parse_lyric_text(s.klyric.clone().trim_start_matches('"'), "\n");
+        let  (mut p, mut t) = (0,0);
+        original.iter_mut().for_each(|timeline| {
+            if p < pronuce.len() {
+                if pronuce[p].start - timeline.start < 0.1 {
+                    timeline.line.pronunciation = pronuce[p].line.text.clone();
+                    p += 1;
+                } else {
+                    timeline.line.pronunciation = "".to_string();
+                }
+            }
+            if t < translation.len() {
+                if translation[t].start - timeline.start < 0.1 {
+                    timeline.line.translation = translation[t].line.text.clone();
+                    t += 1;
+                } else {
+                    timeline.line.translation = "".to_string();
+                }
+            }
 
-    if s.starts_with('"') {
-        lrc_string = &s[1..s.len() - 1];
-    }
+        });
+        lrcx.metadata = lrc_metatag;
+        lrcx.lyric_body = original;
+        lrcx
+    };
+    // 塞进去
+    lrcx.cal_duration_from_start();
+    Ok(lrcx)
+}
 
-    let lines: Vec<&str> = lrc_string.split(splitter).collect();
-    info!("{} lines", lines.len());
-    let lrc_metatag_regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
-    let lrc_timeline_regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
-
+fn parse_metatag(s: &str, splitter: &str)-> BTreeSet<IDTag> {
+    let lines: Vec<&str> = s.split(splitter).collect();
+    let mut metadata: BTreeSet<IDTag> = Default::default();
     for line in lines {
-        let line = line.trim();
-
-        if line.is_empty() {
-            continue;
-        }
-
-        if lrc_metatag_regex.captures(line).is_some() {
-            let re = lrc_metatag_regex.captures(line).unwrap();
+        if LRC_METATAG_REGEX.captures(line).is_some() {
+            let re = LRC_METATAG_REGEX.captures(line).unwrap();
             let tag_name = re.get(0).unwrap().as_str();
             let tag_value = line[tag_name.len() + 1..].trim().to_string();
-            lrcx.metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
+            metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
             continue;
         }
-        if lrc_timeline_regex.captures(line).is_some() {
-            let timestamp = lrc_timeline_regex.captures(line).unwrap()
-                .get(0).unwrap().as_str().to_string();
+
+    }
+    metadata
+}
+
+fn parse_lyric_text(lrc_string: &str, splitter: &str) -> Vec<LyricTimeLine> {
+    let lines: Vec<&str> = lrc_string.split(splitter).collect();
+    let mut parsed_lines: Vec<LyricTimeLine> = Default::default();
+    info!("{} lines", lines.len());
+    for line in lines {
+        let line = line.trim();
+        if LRC_TIMELINE_REGEX.captures(line).is_some() {
+            let timestamp = LRC_TIMELINE_REGEX.captures(line).unwrap()
+                             .get(0).unwrap().as_str().to_string();
+
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
             lyric_line.line.text = verse.clone();
             lyric_line.line.length = verse.len() as i64;
             lyric_line.start = time_tag_to_time_f64(timestamp.trim_start_matches('[').
                                                     to_string().trim_end_matches(']'));
-            lrcx.lyric_body.push(lyric_line);
+            parsed_lines.push(lyric_line);
             continue;
         }
     }
-    lrcx.cal_duration_from_start();
-    Ok(lrcx)
+    parsed_lines
 }
 
 pub async fn save_lyric_file(song: &NeteaseSong) -> AnyResult<()> {
@@ -223,7 +257,7 @@ pub async fn save_lyric_file(song: &NeteaseSong) -> AnyResult<()> {
     let song_lyrics = get_song_lyric(&default_song).await?;
     info!("song_lyrics {:?}", song_lyrics);
 
-    let mut lrcx = parse_netease_lyric(song_lyrics.get_original_lyric().unwrap(), "\n")?;
+    let mut lrcx = parse_netease_lyric(&song_lyrics)?;
     info!("writing lyric file of length {}", lrcx.lyric_body.len());
 
     let mut file = File::create(lyric_file_path(&song.artist, &song.name))?;
