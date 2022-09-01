@@ -41,15 +41,24 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
 #[cfg(test)]
 mod tests {
     use log::warn;
+    use reqwest::Client;
     use serde_json::json;
 
-    use crate::{api::model::Lrcx, get_lyrics::{lyric_file::{activate_lyric, LyricSource}, netease::model::NeteaseSong, kugou::model::KugouSong}, player_info::link_system::get_player_info};
+    use crate::{api::model::Lrcx, get_lyrics::{lyric_file::{activate_lyric, LyricSource, get_client_provider}, netease::model::NeteaseSong, kugou::model::KugouSong}, player_info::link_system::get_player_info};
 
     #[test]
     fn test_whole() {
         //create an tokio async runtime to run get_next_inline_lyrics function
         let mut runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
+
+        // 测试需要代理就在这里加，如果要跑一堆测试记得这里完了过后去掉代理
+        get_client_provider().set(
+            Client::builder()
+            .proxy(reqwest::Proxy::http("http://127.0.0.1:7890").unwrap())
+            .proxy(reqwest::Proxy::https("https://127.0.0.1:7890").unwrap())
+            .build().unwrap()
+        ).await;
 
         let mut player_info = match get_player_info().await{
             Ok(info) => (info),
@@ -74,7 +83,7 @@ mod tests {
             access_key: Default::default(),
            };
 
-        let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
+        let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Kugou(k)).await;
         let res = json!(res.map_or_else(
             |err|{
                 println!("error: {}", err);
