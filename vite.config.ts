@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import Unocss from 'unocss/vite'
 import react from '@vitejs/plugin-react'
+import reactRefresh from '@vitejs/plugin-react-refresh'
+import vitePluginImp from 'vite-plugin-imp'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,6 +23,7 @@ export default defineConfig({
 
     plugins: [
         react(),
+        reactRefresh(),
         Unocss({
             rules: [
                 ['text-stroke-black', { '-webkit-text-stroke-color': 'black' }],
@@ -46,5 +49,21 @@ export default defineConfig({
                 })]
                 ]
         }),
+        vitePluginImp({
+            libList: [
+                {
+                    libName: "antd",
+                    style: (name) => `antd/lib/${name}/style/index.less`,
+                },
+            ],
+        }),
     ],
+    css: {
+        preprocessorOptions: {
+            less: {
+              // 支持内联 JavaScript
+                javascriptEnabled: true,
+            }
+        }
+    },
 })

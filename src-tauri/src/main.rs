@@ -15,13 +15,11 @@ use std::env;
 use api::{connect, lyric_line};
 
 
-use tauri_plugin_store::{PluginBuilder, StoreBuilder};
+use tauri_plugin_store::PluginBuilder;
 
 fn main() {
 
     env_logger::init();
-
-
 
     let _app = tauri::Builder::default()
         .setup(app::window::shadow_effect) // Shadow effect
