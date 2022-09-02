@@ -44,13 +44,14 @@ mod tests {
     use reqwest::Client;
     use serde_json::json;
 
-    use crate::{api::model::Lrcx, get_lyrics::{lyric_file::{activate_lyric, LyricSource, get_client_provider}, netease::model::NeteaseSong, kugou::model::KugouSong}, player_info::link_system::get_player_info};
+    use crate::{api::model::Lrcx, get_lyrics::{lyric_file::{activate_lyric, LyricSource, get_client_provider}, netease::model::NeteaseSong, kugou::model::KugouSong, cache::get_cache_manager}, player_info::link_system::get_player_info};
 
     #[test]
     fn test_whole() {
         //create an tokio async runtime to run get_next_inline_lyrics function
         let mut runtime = tokio::runtime::Runtime::new().unwrap();
         runtime.block_on(async {
+        let _lyric_cache = tokio::spawn(get_cache_manager().update());
 
         // 测试需要代理就在这里加，如果要跑一堆测试记得这里完了过后去掉代理
         get_client_provider().set(
@@ -59,7 +60,6 @@ mod tests {
             .proxy(reqwest::Proxy::https("https://127.0.0.1:7890").unwrap())
             .build().unwrap()
         ).await;
-
         let mut player_info = match get_player_info().await{
             Ok(info) => (info),
             Err(err) => {

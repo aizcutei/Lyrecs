@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use tokio::sync::{Mutex, MutexGuard};
 use std::path::PathBuf;
-use anyhow::Result as AnyResult;
+use anyhow::{Result as AnyResult, Ok};
 use directories::UserDirs;
 use log::info;
 use reqwest::Client;
@@ -12,6 +12,7 @@ use crate::api::model::Lrcx;
 use crate::get_lyrics::kugou::get_lyrics::kugou_save_lyric_file;
 use crate::get_lyrics::netease::get_lyrics::save_lyric_file;
 
+use super::cache::get_cache_manager;
 use super::kugou::model::KugouSong;
 use super::netease::model::NeteaseSong;
 
@@ -71,12 +72,17 @@ pub fn lyric_file_exists(artist : &str, title : &str) -> bool {
 }
 
 pub async fn activate_lyric(song: LyricSource) -> AnyResult<Lrcx> {
+    let cache_manager = get_cache_manager();
+    if cache_manager.is_fresh().await {
+        return Ok(cache_manager.get_cache().await.clone())
+    }
     // if netease blabla if kugou blabla
     let lyric_str = get_lyric_file(song).await.unwrap();
     if lyric_str.is_empty() {
         return Err(anyhow::anyhow!("lyric file is empty"))
     }
     let lrc = serde_json::from_str::<Lrcx>(&lyric_str)?;
+    cache_manager.set_cache(lrc.clone()).await;
     Ok(lrc)
 }
 

@@ -15,6 +15,7 @@ mod api;
 use std::env;
 use api::connect;
 
+use get_lyrics::cache::get_cache_manager;
 use tauri_plugin_store::{PluginBuilder, StoreBuilder};
 
 fn main() {
@@ -24,6 +25,8 @@ fn main() {
     let setting_data = StoreBuilder::new(".settings".parse().unwrap())
         .default("Test-Item".to_string(), "Test-Value".into())
         .build();
+
+    let _lyric_cache = tokio::spawn(get_cache_manager().update());
 
     let _app = tauri::Builder::default()
         .setup(app::window::shadow_effect) // Shadow effect
