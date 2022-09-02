@@ -11,7 +11,7 @@ use strsim::levenshtein;
 use log::info;
 
 use crate::get_lyrics::lyric_file::{lyric_file_path, lyric_file_exists};
-use crate::get_lyrics::netease::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
+use super::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
 use crate::api::model::{Lrcx, IDTag, LyricTimeLine};
 use crate::parse_lyric::utils::time_tag_to_time_f64;
 use crate::get_lyrics::song::{RemoteSongTrait};
