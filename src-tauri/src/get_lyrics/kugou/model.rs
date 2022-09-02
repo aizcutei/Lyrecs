@@ -1,10 +1,10 @@
 // ----- Kugou -----
 
-use std::ops::Index;
+use std::{ops::Index, cell::Cell};
 
 use serde_json::Value;
 
-use crate::get_lyrics::song::RemoteSongTrait;
+use crate::{get_lyrics::song::RemoteSongTrait, api::model::{Lrcx, IDTag, LyricTimeLine, WordTimeline}};
 
 #[derive(Debug, Clone)]
 pub struct KugouSong {
@@ -103,11 +103,7 @@ pub struct KugouSongLyrics {
 }
 
 impl KugouSongLyrics {
-    pub fn new(lyric: &Value) -> Self {
-        let mut content = "".to_string();
-        if lyric.get("content").is_some() {
-            content = lyric["content"].as_str().unwrap().to_string();
-        }
+    pub fn new(content: String) -> Self {
         KugouSongLyrics{
             content,
             decoded: "".to_string(),
@@ -119,6 +115,83 @@ impl KugouSongLyrics {
             content: String::new(),
             decoded: String::new(),
         }
+    }
+
+
+
+    pub fn to_lrcx(&self) -> Lrcx {
+        let mut lrcx: Lrcx = Default::default();
+        let lines = self.decoded.clone();
+        let lines_iter = &lines.split('\n').map(|x| {
+            x.replace('\r', "")
+        }).collect::<Vec<String>>();
+        let mut i = 0;
+        // 处理前面的 metadata 部分
+        for line in lines_iter {
+            let tag = line.trim_start_matches('[').trim_end_matches(']');
+            let tag_iter = tag.split(':').collect::<Vec<&str>>();
+            i += 1; // 移到后面一行，这样 parse 到 language 之后break就直接从歌词开始
+            if tag_iter[0] == "language" {
+                break;
+            }
+            lrcx.metadata.insert(IDTag::new(tag_iter[0].to_string(),
+            tag_iter[1].to_string()));
+        }
+
+        // 处理歌词部分
+        for line in lines_iter[i..].iter(){
+            if !line.starts_with('[') {
+                continue;
+            }
+            let mut timeline: LyricTimeLine = Default::default();
+            let bracket_split = line.trim_start_matches('[').splitn(2,']').collect::<Vec<&str>>();
+            // 一行歌词的时间轴
+            let timestamp = bracket_split[0].split(',').collect::<Vec<&str>>();
+
+            let start = timestamp[0].parse::<f64>();
+            if start.is_err() {
+                continue;
+            }
+            timeline.start = start.unwrap() / 1000.0;
+            // 没有start就没有end，应该不会有没end有start，所以这里偷懒
+            timeline.duration = Cell::new(timestamp[1].parse::<f64>().unwrap() / 1000.0);
+
+            // 处理字轴
+
+            // 如果没有字轴,直接开溜
+            if bracket_split[1].find(['<','>']).is_none() {
+                timeline.line.text = bracket_split[1].to_string();
+                lrcx.lyric_body.push(timeline);
+                continue;
+            }
+
+            // todo 要是歌词里有<就会出问题
+            let mut lyric_split = bracket_split[1].split('<').collect::<Vec<&str>>();
+            if lyric_split.len() == 1 {}
+            // println!("lyric_split: {:?}", lyric_split);
+
+            let mut text = String::new();
+            for raw_word in lyric_split {
+                // 先处理时间
+                if raw_word.find('>').is_none() {
+                    continue;
+                }
+                let word_time = &raw_word[..raw_word.find('>').unwrap()];
+                let mut word_time_line: WordTimeline = Default::default();
+                let word_time_split = word_time.split(',').collect::<Vec<&str>>();
+                word_time_line.start = timeline.start +(word_time_split[0].parse::<f64>().unwrap() / 1000.0 );
+                word_time_line.duration = word_time_split[1].parse::<f64>().unwrap() / 1000.0;
+
+                // 再处理文本
+                let word = &raw_word[raw_word.find('>').unwrap()+1..];
+                word_time_line.length = word.chars().count();
+                text.push_str(word);
+                timeline.line.word_timeline.push(word_time_line);
+            }
+            timeline.line.text = text;
+            lrcx.lyric_body.push(timeline);
+        }
+        lrcx
     }
 }
 

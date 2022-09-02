@@ -113,9 +113,9 @@ impl LyricLine {
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct WordTimeline{
-    pub pos: i64,
-    pub start: i64,
-    pub end: i64,
+    pub start: f64,
+    pub duration: f64,
+    pub length: usize,
 }
 
 pub trait LyricLineResponse {
@@ -135,11 +135,11 @@ impl LyricLine {
 }
 
 impl WordTimeline {
-    pub fn new(pos: i64, start: i64, end: i64) -> WordTimeline {
+    pub fn new(length: usize, start: f64, duration: f64) -> WordTimeline {
         WordTimeline {
-            pos,
             start,
-            end,
+            duration,
+            length,
         }
     }
 }
