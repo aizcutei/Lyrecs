@@ -9,11 +9,11 @@ export default function Setting() {
         console.log(result)
     })
 
-
     return (<>
         <body className="">
             <div className="">
                 <p>Setting</p>
+                <button onClick={() => ReadSetting()}>Read Setting</button>
             </div>
         </body>
         </>
@@ -24,8 +24,10 @@ export default function Setting() {
 async function ReadSetting() {
     const store = new Store('.settings')
     const setting = await store.get('Test-Item')
+    console.log(setting)
     return setting
 }
+
 
 interface SettingData {
     //Window Related

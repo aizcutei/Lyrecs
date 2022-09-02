@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { useEffect, useState } from "react";
+import { appWindow } from "@tauri-apps/api/window";
 
 function IntervalBody() {
     {/*

@@ -74,7 +74,7 @@ mod tests {
             access_key: Default::default(),
             };
 
-        let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
+        let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Kugou(k)).await;
         let res = json!(res.map_or_else(
             |err|{
                 println!("error: {}", err);
