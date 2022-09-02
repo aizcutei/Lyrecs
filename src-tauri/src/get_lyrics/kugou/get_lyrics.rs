@@ -10,6 +10,7 @@ use anyhow::Ok;
 use anyhow::Result as AnyResult;
 use log::info;
 
+use crate::get_lyrics::lyric_file::get_client_provider;
 use crate::get_lyrics::song::Song;
 use crate::get_lyrics::lyric_file::{lyric_file_path};
 use crate::get_lyrics::kugou::model::{KugouSong, KugouSongList, KugouSongLyrics};
@@ -26,7 +27,7 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> 
 
     let requrl = SEARCH_URL.to_string() + key_word + "&pagesize=" + &number.to_string();
 
-    let client = reqwest::Client::new();
+    let client = get_client_provider().get().await;
 
     info!("requesting song list");
     let resp = client.get(requrl)
@@ -68,7 +69,7 @@ pub async fn get_lyrics_list(song: &KugouSong) -> AnyResult<KugouSongList> {
 
     let requrl = LYRIC_SEARCH_URL.to_string() + &song.hash;
 
-    let client = reqwest::Client::new();
+    let client = get_client_provider().get().await;
 
     info!("requesting lyrics list");
     let resp = client.get(requrl)
@@ -106,7 +107,7 @@ pub async fn get_song_lyric(song: &KugouSong) -> AnyResult<KugouSongLyrics> {
 
     let requrl = LYRIC_URL.to_string() + &song.id + "&accesskey=" + &song.access_key;
 
-    let client = reqwest::Client::new();
+    let client = get_client_provider().get().await;
 
     let resp = client.get(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)

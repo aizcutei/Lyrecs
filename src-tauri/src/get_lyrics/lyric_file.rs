@@ -1,23 +1,54 @@
-use std::any::Any;
+use std::cell::{RefCell, Cell, Ref};
 use std::fs::File;
 use std::io::Read;
+use tokio::sync::{Mutex, MutexGuard};
 use std::path::PathBuf;
 use anyhow::Result as AnyResult;
 use directories::UserDirs;
 use log::info;
+use reqwest::Client;
 
 use crate::api::model::Lrcx;
 use crate::get_lyrics::kugou::get_lyrics::kugou_save_lyric_file;
 use crate::get_lyrics::netease::get_lyrics::save_lyric_file;
-use crate::player_info::link_system::PlayerInfo;
 
 use super::kugou::model::KugouSong;
 use super::netease::model::NeteaseSong;
+
+lazy_static! {
+    static ref CLIENT_PROVIDER: ClientProvider = ClientProvider::new();
+}
 
 pub enum LyricSource {
     Netease(NeteaseSong),
     Kugou(KugouSong),
 }
+
+pub struct ClientProvider {
+    client: Mutex<Client>,
+}
+
+pub fn get_client_provider() -> &'static ClientProvider {
+    &CLIENT_PROVIDER
+}
+
+impl ClientProvider {
+    pub fn new() -> Self{
+        ClientProvider{
+            client: Mutex::new(Client::new()),
+        }
+    }
+
+    pub async fn get(&self) -> MutexGuard<'_, Client> {
+        self.client.lock().await
+    }
+
+    pub async fn set(&self, client:Client){
+        let mut c = self.client.lock().await;
+        *c = client;
+    }
+}
+
 
 pub fn lyric_file_path(artist : &str, title : &str) -> PathBuf {
     let user_dirs = UserDirs::new().unwrap();
