@@ -11,7 +11,7 @@ use strsim::levenshtein;
 use log::info;
 
 use crate::get_lyrics::lyric_file::{lyric_file_path, lyric_file_exists};
-use crate::get_lyrics::netease::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
+use super::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
 use crate::api::model::{Lrcx, IDTag, LyricTimeLine};
 use crate::parse_lyric::utils::time_tag_to_time_f64;
 use crate::get_lyrics::song::{RemoteSongTrait};
@@ -29,8 +29,9 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList
 
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 
-    let client = reqwest::Client::builder().proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
-    .proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
+    let client = reqwest::Client::builder()
+    //.proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
+    //.proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
     .build().unwrap();
 
     let resp = client.post(requrl)
@@ -227,7 +228,7 @@ fn parse_lyric_text(lrc_string: &str, splitter: &str) -> Vec<LyricTimeLine> {
         let line = line.trim();
         if LRC_TIMELINE_REGEX.captures(line).is_some() {
             let timestamp = LRC_TIMELINE_REGEX.captures(line).unwrap()
-                             .get(0).unwrap().as_str().to_string();
+                            .get(0).unwrap().as_str().to_string();
 
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();

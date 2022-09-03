@@ -1,90 +1,66 @@
 import { WebviewWindow } from '@tauri-apps/api/window'
 import { Store } from 'tauri-plugin-store-api'
 import { useState } from 'react'
+import { Col, Row, Switch } from 'antd'
 
 export default function Setting() {
 
-    let [focusClassName, setFocusClassName] = useState("titlebar focus")
-
-    FocusMonitor().then( result => {
-        if (result) {
-            setFocusClassName("titlebar focus")
-        }else{
-            setFocusClassName("titlebar")
-        }
-    })
-
-    ReadSetting().then( result => {
-        console.log(result)
-    })
-
     return (<>
-        <div>
-            <div data-tauri-drag-region className={focusClassName}>
-                <div className="traffic-lights">
-                    <button className="traffic-light traffic-light-close" id="close" onClick={() => Close()}></button>
-                    <button className="traffic-light traffic-light-minimize" id="minimize" onClick={() => Minimize()}></button>
-                    <button className="traffic-light traffic-light-maximize" id="maximize" onClick={() => Maxinize()}></button>
-                </div>
-            </div>
-        </div>
-
-        <body className="setting-body">
-            <div className="setting-container">
-                <p>Setting</p>
+    <Row>
+        <Col span={24}>
+            <h1 className='text-center'>Setting</h1>
+        </Col>
+    </Row>
+    <Row>
+        <Col span={4}>
+            <p>毛玻璃效果</p>
+        </Col>
+        <Col span={4}>
+            <Switch defaultChecked={true} />
+        </Col>x
+        <Col span={4}>
+            <p>背景颜色</p>
+        </Col>
+        <Col span={4}>
+            <Switch defaultChecked={true} />
+        </Col>
+        <Col span={4}>
+            <p>字体颜色</p>
+        </Col>
+        <Col span={4}>
+            <Switch defaultChecked={true} />
+        </Col>
+    </Row>
+        <body className="">
+            <div className="">
+                <p id="title">Setting</p>
+                <button onClick={() => ReadSetting()}>Read Setting</button>
+                <button onClick={() => WriteSetting()}>Write Setting</button>
             </div>
         </body>
         </>
     )
 }
 
-function Close() {
-    const settingWindow = WebviewWindow.getByLabel('setting')
-
-    if (settingWindow) {
-        settingWindow.close()
-    }
-}
-
-async function Maxinize() {
-    const settingWindow = WebviewWindow.getByLabel('setting')
-
-    if (settingWindow) {
-        if (await settingWindow.isMaximized()) {
-            settingWindow.toggleMaximize()
-        }else{
-            settingWindow.toggleMaximize()
-        }
-    }
-}
-
-function Minimize() {
-    const settingWindow = WebviewWindow.getByLabel('setting')
-
-    if (settingWindow) {
-        settingWindow.minimize()
-    }
-}
-
-async function FocusMonitor() {
-    let [focus, setFocus] = useState(false)
-
-    const settingWindow = WebviewWindow.getByLabel('setting')
-
-    if (settingWindow) {
-        const unlisten = await settingWindow.onFocusChanged(({ payload: focused }) => {
-            setFocus(focused)
-        });
-    }
-    return focus
-}
-
 
 async function ReadSetting() {
     const store = new Store('.settings')
+    store.load()
     const setting = await store.get('Test-Item')
+    if (setting ){
+        let t = document.getElementById("title") as HTMLElement
+        t.innerHTML = "Setting: " + setting
+    }
+    console.log(setting)
     return setting
 }
+
+function WriteSetting() {
+    const store = new Store('.settings')
+    store.set('Test-Item', 'Test-Value2')
+    store.save()
+}
+
 
 interface SettingData {
     //Window Related
@@ -111,4 +87,7 @@ interface SettingData {
     backgroundColor: string,
     backgroundImage: string,
     backgroundOpacity: number,
+
+    //Backend Related
+    defaultService: string,
 }

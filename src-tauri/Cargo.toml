@@ -42,7 +42,7 @@ git = "https://github.com/tauri-apps/tauri-plugin-store"
 branch = "dev"
 
 [dependencies.window-vibrancy]
-git = "https://github.com/aizcutei/window-vibrancy"
+git = "https://github.com/aizcutei/window-vibrancy-customed"
 branch = "dev"
 
 [target.'cfg(windows)'.dependencies]
