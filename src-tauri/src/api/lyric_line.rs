@@ -64,7 +64,7 @@ mod tests {
             Ok(info) => (info),
             Err(err) => {
                 warn!("error: {}", err);
-                return Default::default()
+                Default::default()
             },
         };
         let n = NeteaseSong{
