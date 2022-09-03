@@ -1,10 +1,10 @@
-use regex::Regex;
-use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT, REFERER};
-use serde_json::Value;
 use anyhow::Ok;
 use anyhow::Result as AnyResult;
-use strsim::levenshtein;
 use log::info;
+use regex::Regex;
+use reqwest::header::{CONTENT_TYPE, COOKIE, REFERER, USER_AGENT};
+use serde_json::Value;
+use strsim::levenshtein;
 
 use crate::get_lyrics::lyric_file::get_client_provider;
 use crate::get_lyrics::song::RemoteSongTrait;
@@ -21,22 +21,31 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<QQSongList> {
     let data = r#"{"music.search.SearchCgiService":{"method":"DoSearchForQQMusicDesktop","module":"music.search.SearchCgiService","param":{"num_per_page":""#.to_string() + &number.to_string() + r#"","page_num":"1","query":""# + key_word + r#"","search_type":"0"}}}"#;
     let requrl = SEARCH_URL.to_string();
     let client = get_client_provider().get().await;
-    let res = client.post(requrl)
+    let res = client
+        .post(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)
         .header(CONTENT_TYPE, "application/json")
         .body(data)
-        .send().await?;
+        .send()
+        .await?;
 
     let json: Value = serde_json::from_str(res.text().await.unwrap().as_str())?;
 
-    if json["music.search.SearchCgiService"]["data"]["body"]["song"]["list"].as_array().unwrap().is_empty() {
+    if json["music.search.SearchCgiService"]["data"]["body"]["song"]["list"]
+        .as_array()
+        .unwrap()
+        .is_empty()
+    {
         return Err(anyhow::anyhow!("qq get_song_list error"));
     }
 
     let mut song_list = QQSongList::new();
 
     info!("reveived song list");
-    for song in json["music.search.SearchCgiService"]["data"]["body"]["song"]["list"].as_array().unwrap() {
+    for song in json["music.search.SearchCgiService"]["data"]["body"]["song"]["list"]
+        .as_array()
+        .unwrap()
+    {
         info!("{:?}", song["name"]);
         let song = QQSong::new(song);
         song_list.push(song);
@@ -55,19 +64,20 @@ pub async fn get_default_song(song_name: &str) -> QQSong {
 }
 
 pub async fn get_song_lyric(song: &QQSong) -> AnyResult<QQSongLyrics> {
-
     let refurl = r#"http://y.qq.com/portal/song/"#.to_owned() + &song.mid.to_string() + r#".html"#;
     let requrl = format!("nobase64=1&musicid={}&callback=jsonp1&g_tk=5381&jsonpCallback=jsonp1&loginUin=0&hostUin=0&format=jsonp&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq&needNewCode=0", song.id);
     let client = get_client_provider().get().await;
-    let resp = client.get(LYRIC_URL.to_string() + "?" + requrl.as_str())
+    let resp = client
+        .get(LYRIC_URL.to_string() + "?" + requrl.as_str())
         .header(USER_AGENT, USER_AGENT_STRING)
         .header(REFERER, refurl)
-        .send().await?;
+        .send()
+        .await?;
 
-    let text = resp.text().await.unwrap();
+    let text = resp.text().await?;
     //println!("{:?}", &text[7..&text.len()-1]);
 
-    let json: Value = serde_json::from_str(&text[7..&text.len()-1])?;
+    let json: Value = serde_json::from_str(&text[7..&text.len() - 1])?;
 
     if json["lyric"].as_str().unwrap().is_empty() {
         return Err(anyhow::anyhow!("qq get_song_lyric error"));
@@ -78,7 +88,7 @@ pub async fn get_song_lyric(song: &QQSong) -> AnyResult<QQSongLyrics> {
     Ok(lyric)
 }
 
-pub async fn qq_save_lyric_file(lyric: &QQSongLyrics) -> AnyResult<()> {
+pub async fn save_lyric_file(lyric: &QQSongLyrics) -> AnyResult<()> {
     todo!()
 }
 

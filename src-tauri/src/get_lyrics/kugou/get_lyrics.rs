@@ -2,37 +2,39 @@ use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 
-use flate2::read::ZlibDecoder;
-use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
-use base64::{decode_config, STANDARD_NO_PAD};
-use serde_json::Value;
-use anyhow::Ok;
 use anyhow::Result as AnyResult;
+use base64::{decode_config, STANDARD_NO_PAD};
+use flate2::read::ZlibDecoder;
 use log::info;
-use serde_json::json;
+use log::warn;
+use reqwest::header::USER_AGENT;
+use serde_json::Value;
+use std::result::Result::Ok;
 
-use crate::get_lyrics::lyric_file::get_client_provider;
-use crate::get_lyrics::song::Song;
-use crate::get_lyrics::lyric_file::{lyric_file_path};
 use crate::get_lyrics::kugou::model::{KugouSong, KugouSongList, KugouSongLyrics};
-use crate::player_info::link_system::PlayerInfo;
+use crate::get_lyrics::lyric_file::get_client_provider;
+use crate::get_lyrics::lyric_file::lyric_file_path;
 use crate::get_lyrics::song::RemoteSongTrait;
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
-const SEARCH_URL: &str = "http://msearchcdn.kugou.com/api/v3/search/song?plat=0&version=9108&keyword=";
+const SEARCH_URL: &str =
+    "http://msearchcdn.kugou.com/api/v3/search/song?plat=0&version=9108&keyword=";
 const LYRIC_SEARCH_URL: &str = "http://krcs.kugou.com/search?ver=1&man=yes&hash=";
 const LYRIC_URL: &str = "http://lyrics.kugou.com/download?ver=1&client=pc&id=";
-const KEYS: [u8; 16] = [64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105];
+const KEYS: [u8; 16] = [
+    64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105,
+];
 
 async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
-
     let requrl = SEARCH_URL.to_string() + key_word + "&pagesize=" + &number.to_string();
     let client = get_client_provider().get().await;
 
     info!("requesting song list");
-    let resp = client.get(requrl)
+    let resp = client
+        .get(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send().await?;
+        .send()
+        .await?;
 
     info!("received song list");
 
@@ -57,24 +59,32 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> 
 }
 
 pub async fn get_default_song(song_name: &str) -> KugouSong {
-    let song_list = get_song_list(song_name, 1).await.unwrap();
-    if song_list.len() == 0 {
-        info!("no song found");
-        return KugouSong::new_empty();
+    match get_song_list(song_name, 1).await {
+        Ok(song_list) => {
+            if song_list.len() == 0 {
+                info!("no song found");
+                return KugouSong::new_empty();
+            }
+            song_list[0].clone()
+        }
+        Err(e) => {
+            warn!("error: {}", e.to_string());
+            KugouSong::new_empty()
+        }
     }
-    song_list[0].clone()
 }
 
 pub async fn get_lyrics_list(song: &KugouSong) -> AnyResult<KugouSongList> {
-
     let requrl = LYRIC_SEARCH_URL.to_string() + &song.hash;
 
     let client = get_client_provider().get().await;
 
     info!("requesting lyrics list");
-    let resp = client.get(requrl)
+    let resp = client
+        .get(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send().await?;
+        .send()
+        .await?;
 
     let json: Value = serde_json::from_str(resp.text().await.unwrap().as_str())?;
 
@@ -104,14 +114,15 @@ pub async fn get_default_lyric_item(lyric_list: &KugouSongList) -> KugouSong {
 }
 
 pub async fn get_song_lyric(song: &KugouSong) -> AnyResult<KugouSongLyrics> {
-
     let requrl = LYRIC_URL.to_string() + &song.id + "&accesskey=" + &song.access_key;
 
     let client = get_client_provider().get().await;
 
-    let resp = client.get(requrl)
+    let resp = client
+        .get(requrl)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send().await?;
+        .send()
+        .await?;
 
     let json: Value = serde_json::from_str(resp.text().await.unwrap().as_str())?;
 
@@ -139,8 +150,8 @@ pub async fn kugou_get_first_lyric(key_word: &str) -> AnyResult<KugouSongLyrics>
 }
 
 pub async fn decode_lyric(lyric: &mut KugouSongLyrics) -> AnyResult<KugouSongLyrics> {
-
-    let mut decoded = decode_config(lyric.content.as_bytes(), STANDARD_NO_PAD).expect("decode error");
+    let mut decoded =
+        decode_config(lyric.content.as_bytes(), STANDARD_NO_PAD).expect("decode error");
 
     if String::from_utf8_lossy(&decoded[..4]) != "krc1" {
         return Err(anyhow::anyhow!("decode error"));
@@ -163,16 +174,20 @@ pub async fn decode_lyric(lyric: &mut KugouSongLyrics) -> AnyResult<KugouSongLyr
     Ok(lyric.to_owned())
 }
 
-pub async fn kugou_save_lyric_file(song: &KugouSong) -> AnyResult<()> {
+pub async fn save_lyric_file(song: &KugouSong) -> AnyResult<()> {
     info!("getting default song");
 
     //remove & in the keyword
-    let mut search_song = format!("{} {}", song.name.clone().replace('&', ""), song.artist.clone().replace('&', ""));
+    let mut search_song = format!(
+        "{} {}",
+        song.name.clone().replace('&', ""),
+        song.artist.clone().replace('&', "")
+    );
 
     let default_song = get_default_song(&search_song).await;
     info!("default song {:?} \n getting lyric", default_song.name);
 
-    let lyrics_list  = get_lyrics_list(&default_song).await.unwrap();
+    let lyrics_list = get_lyrics_list(&default_song).await.unwrap();
 
     let song_lyrics = get_default_lyric_item(&lyrics_list).await;
 
@@ -215,6 +230,5 @@ mod tests {
         lrc.content = encryted.to_string();
 
         decode_lyric(&mut lrc);
-
     }
 }

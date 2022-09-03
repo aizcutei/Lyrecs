@@ -1,4 +1,3 @@
-
 use lazy_static::lazy_static;
 use log::info;
 use tokio::sync::{Mutex, MutexGuard};
@@ -65,5 +64,3 @@ impl CacheManager {
         }
     }
 }
-
-

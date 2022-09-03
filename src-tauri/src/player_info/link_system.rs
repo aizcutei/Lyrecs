@@ -93,10 +93,12 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
     let status = &current_session.GetPlaybackInfo()?.PlaybackStatus()?.0;
 
     Ok(PlayerInfo {
+        track: Song {
+            title: track_info.Title()?.to_string(),
+            artist:track_info.Artist()?.to_string(),
+            album: track_info.AlbumTitle()?.to_string(),
+        },
         state: status.to_string(),
-        title: track_info.Title()?.to_string(),
-        artist: track_info.Artist()?.to_string(),
-        album: track_info.AlbumTitle()?.to_string(),
         duration: timeline.EndTime()?.Duration as f64 - timeline.StartTime()?.Duration as f64,
         position: timeline.Position()?.Duration as f64,
     })
