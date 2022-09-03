@@ -14,12 +14,19 @@ mod api;
 use std::env;
 use api::{connect, lyric_line};
 
+use get_lyrics::cache::get_cache_manager;
+use tauri_plugin_store::{PluginBuilder, StoreBuilder};
 
-use tauri_plugin_store::PluginBuilder;
 
 fn main() {
 
     env_logger::init();
+
+    let setting_data = StoreBuilder::new(".settings".parse().unwrap())
+        .default("Test-Item".to_string(), "Test-Value".into())
+        .build();
+
+    let _lyric_cache = tokio::spawn(get_cache_manager().update());
 
     let _app = tauri::Builder::default()
         .setup(app::window::shadow_effect) // Shadow effect
@@ -33,6 +40,4 @@ fn main() {
             ])
         .run(tauri::generate_context!())
         .expect("Error while running tauri application in main");
-
-
 }

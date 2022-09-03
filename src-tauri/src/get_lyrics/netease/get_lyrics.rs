@@ -233,7 +233,7 @@ fn parse_lyric_text(lrc_string: &str, splitter: &str) -> Vec<LyricTimeLine> {
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
             lyric_line.line.text = verse.clone();
-            lyric_line.line.length = verse.len() as i64;
+            lyric_line.line.length = verse.chars().count() as i64;
             lyric_line.start = time_tag_to_time_f64(timestamp.trim_start_matches('[').
                                                     to_string().trim_end_matches(']'));
             parsed_lines.push(lyric_line);

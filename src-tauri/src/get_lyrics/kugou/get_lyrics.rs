@@ -9,6 +9,7 @@ use serde_json::Value;
 use anyhow::Ok;
 use anyhow::Result as AnyResult;
 use log::info;
+use serde_json::json;
 
 use crate::get_lyrics::lyric_file::get_client_provider;
 use crate::get_lyrics::song::Song;
@@ -26,7 +27,6 @@ const KEYS: [u8; 16] = [64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 2
 async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
 
     let requrl = SEARCH_URL.to_string() + key_word + "&pagesize=" + &number.to_string();
-
     let client = get_client_provider().get().await;
 
     info!("requesting song list");
@@ -119,7 +119,12 @@ pub async fn get_song_lyric(song: &KugouSong) -> AnyResult<KugouSongLyrics> {
         return Err(anyhow::anyhow!("get_song_lyric error"));
     }
 
-    let mut lyric = KugouSongLyrics::new(&json);
+    let mut content = "".to_string();
+    if json.get("content").is_some() {
+        content = json["content"].as_str().unwrap().to_string();
+    }
+
+    let mut lyric = KugouSongLyrics::new(content);
 
     lyric = decode_lyric(&mut lyric).await?;
 
@@ -190,7 +195,7 @@ pub async fn kugou_save_lyric_file(song: &KugouSong) -> AnyResult<()> {
         file.write_all(b"\n")?;
     }
     */
-    file.write_all(lyric_str.decoded.as_bytes())?;
+    write!(file, "{}", serde_json::to_string(&lyric_str.to_lrcx())?)?;
 
     Ok(())
 }
