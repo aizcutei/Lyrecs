@@ -82,7 +82,8 @@ pub async fn activate_lyric(song: LyricSource) -> AnyResult<Lrcx> {
         return Err(anyhow::anyhow!("lyric file is empty"))
     }
     let lrc = serde_json::from_str::<Lrcx>(&lyric_str)?;
-    cache_manager.set_cache(lrc.clone()).await;
+    let cache_lrc = lrc.clone();
+    cache_manager.set_cache(cache_lrc).await;
     Ok(lrc)
 }
 
