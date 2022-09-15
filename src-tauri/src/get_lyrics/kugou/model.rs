@@ -1,10 +1,13 @@
 // ----- Kugou -----
 
-use std::{ops::Index, cell::Cell};
+use std::{cell::Cell, ops::Index};
 
 use serde_json::Value;
 
-use crate::{get_lyrics::song::RemoteSongTrait, api::model::{Lrcx, IDTag, LyricTimeLine, WordTimeline}};
+use crate::{
+    api::model::{IDTag, Lrcx, LyricTimeLine, WordTimeline},
+    get_lyrics::song::RemoteSongTrait,
+};
 
 #[derive(Debug, Clone)]
 pub struct KugouSong {
@@ -17,13 +20,13 @@ pub struct KugouSong {
 }
 
 #[derive(Debug, Clone)]
-pub struct KugouSongList (Vec<KugouSong>);
+pub struct KugouSongList(Vec<KugouSong>);
 
 impl RemoteSongTrait for KugouSong {
     fn new(song: &Value) -> Self {
         let mut name = "".to_string();
         if song.get("name").is_none() {
-            if song.get("song").is_some(){
+            if song.get("song").is_some() {
                 name = song["song"].as_str().unwrap().to_string();
             }
         } else {
@@ -32,7 +35,7 @@ impl RemoteSongTrait for KugouSong {
 
         let mut artist = "".to_string();
         if song.get("singername").is_none() {
-            if song.get("singer").is_some(){
+            if song.get("singer").is_some() {
                 artist = song["singer"].as_str().unwrap().to_string();
             }
         } else {
@@ -59,7 +62,7 @@ impl RemoteSongTrait for KugouSong {
             access_key = song["accesskey"].as_str().unwrap().to_string();
         }
 
-        KugouSong{
+        KugouSong {
             hash,
             id,
             access_key,
@@ -70,7 +73,7 @@ impl RemoteSongTrait for KugouSong {
     }
 
     fn new_empty() -> Self {
-        KugouSong{
+        KugouSong {
             hash: String::new(),
             name: String::new(),
             artist: String::new(),
@@ -81,11 +84,12 @@ impl RemoteSongTrait for KugouSong {
     }
 
     fn is_empty(&self) -> bool {
-        self.name.is_empty() && self.artist.is_empty() && self.album.is_empty() && self.hash.is_empty()
+        self.name.is_empty()
+            && self.artist.is_empty()
+            && self.album.is_empty()
+            && self.hash.is_empty()
     }
-
 }
-
 
 impl KugouSongList {
     pub fn new() -> Self {
@@ -104,27 +108,26 @@ pub struct KugouSongLyrics {
 
 impl KugouSongLyrics {
     pub fn new(content: String) -> Self {
-        KugouSongLyrics{
+        KugouSongLyrics {
             content,
             decoded: "".to_string(),
         }
     }
 
     pub fn new_empty() -> Self {
-        KugouSongLyrics{
+        KugouSongLyrics {
             content: String::new(),
             decoded: String::new(),
         }
     }
 
-
-
     pub fn to_lrcx(&self) -> Lrcx {
         let mut lrcx: Lrcx = Default::default();
         let lines = self.decoded.clone();
-        let lines_iter = &lines.split('\n').map(|x| {
-            x.replace('\r', "")
-        }).collect::<Vec<String>>();
+        let lines_iter = &lines
+            .split('\n')
+            .map(|x| x.replace('\r', ""))
+            .collect::<Vec<String>>();
         let mut i = 0;
         // 处理前面的 metadata 部分
         for line in lines_iter {
@@ -134,17 +137,20 @@ impl KugouSongLyrics {
             if tag_iter[0] == "language" {
                 break;
             }
-            lrcx.metadata.insert(IDTag::new(tag_iter[0].to_string(),
-            tag_iter[1].to_string()));
+            lrcx.metadata
+                .insert(IDTag::new(tag_iter[0].to_string(), tag_iter[1].to_string()));
         }
 
         // 处理歌词部分
-        for line in lines_iter[i..].iter(){
+        for line in lines_iter[i..].iter() {
             if !line.starts_with('[') {
                 continue;
             }
             let mut timeline: LyricTimeLine = Default::default();
-            let bracket_split = line.trim_start_matches('[').splitn(2,']').collect::<Vec<&str>>();
+            let bracket_split = line
+                .trim_start_matches('[')
+                .splitn(2, ']')
+                .collect::<Vec<&str>>();
             // 一行歌词的时间轴
             let timestamp = bracket_split[0].split(',').collect::<Vec<&str>>();
 
@@ -159,7 +165,7 @@ impl KugouSongLyrics {
             // 处理字轴
 
             // 如果没有字轴,直接开溜
-            if bracket_split[1].find(['<','>']).is_none() {
+            if bracket_split[1].find(['<', '>']).is_none() {
                 timeline.line.text = bracket_split[1].to_string();
                 lrcx.lyric_body.push(timeline);
                 continue;
@@ -171,6 +177,7 @@ impl KugouSongLyrics {
             // println!("lyric_split: {:?}", lyric_split);
 
             let mut text = String::new();
+            let mut word_pos: usize = 0;
             for raw_word in lyric_split {
                 // 先处理时间
                 if raw_word.find('>').is_none() {
@@ -179,12 +186,16 @@ impl KugouSongLyrics {
                 let word_time = &raw_word[..raw_word.find('>').unwrap()];
                 let mut word_time_line: WordTimeline = Default::default();
                 let word_time_split = word_time.split(',').collect::<Vec<&str>>();
-                word_time_line.start = timeline.start +(word_time_split[0].parse::<f64>().unwrap() / 1000.0 );
+                word_time_line.start =
+                    timeline.start + (word_time_split[0].parse::<f64>().unwrap() / 1000.0);
                 word_time_line.duration = word_time_split[1].parse::<f64>().unwrap() / 1000.0;
 
                 // 再处理文本
-                let word = &raw_word[raw_word.find('>').unwrap()+1..];
-                word_time_line.length = word.chars().count();
+                let word = &raw_word[raw_word.find('>').unwrap() + 1..];
+                word_time_line.pos = {
+                    word_pos += word.chars().count();
+                    word_pos
+                };
                 text.push_str(word);
                 timeline.line.word_timeline.push(word_time_line);
             }

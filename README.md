@@ -13,20 +13,20 @@
 
 ## Lyrecs
 
-Lyrecs是一款跨平台的Apple Music的桌面动态歌词展示软件。Inspired by [LyricsX](https://github.com/ddddxxx/LyricsX)。WIP for now。
+Lyrecs 是一款跨平台的 Apple Music 的桌面动态歌词展示软件。Inspired by [LyricsX](https://github.com/ddddxxx/LyricsX)。WIP for now。
 
-- 跨平台（Mac、Windows网页版）
+-   跨平台（Mac、Windows 网页版）
 
-- 自定义文件歌词样式
+-   自定义文件歌词样式
 
-- 支持单字时间轴，歌词翻译（需歌词文件包含）
+-   支持单字时间轴，歌词翻译（需歌词文件包含）
 
-- and more...
+-   and more...
 
 ## Build from source
 
-- Install Rust and tauri on your device
+-   Install Rust and tauri on your device
 
-- Clone this repository
+-   Clone this repository
 
-- Run`cargo tauri build`
+-   Run`cargo tauri build`
