@@ -102,7 +102,6 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
     }
     let track_info = track_info.unwrap();
     let position = itunes.get_player_position().unwrap();
-    print!("duration {}", track_info.duration);
 
     Ok(PlayerInfo {
         track: Song {
@@ -142,12 +141,13 @@ mod tests {
                 match a {
                     Ok(res) => {
                         println!(
-                            "{} {} {} {} {}",
+                            "{} {} {} {} {} {}",
                             res.track.title,
                             res.track.album,
                             res.track.artist,
                             res.duration,
-                            res.position
+                            res.position,
+                            res.state,
                         );
                     }
                     Err(err) => {
