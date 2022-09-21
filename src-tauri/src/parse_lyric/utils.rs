@@ -7,7 +7,7 @@ pub fn time_f64_to_time_tag(time: f64) -> String {
 }
 
 pub fn time_tag_to_time_f64(time_tag: &str) -> f64 {
-    println!("{}", time_tag);
+    //println!("{}", time_tag);
     let time_str = time_tag.split(":").collect::<Vec<&str>>();
     let time_mm = time_str[0].parse::<f64>().unwrap();
     let time_ss = time_str[1].parse::<f64>().unwrap();

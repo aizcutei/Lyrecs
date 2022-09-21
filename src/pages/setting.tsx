@@ -1,45 +1,125 @@
 import { WebviewWindow } from '@tauri-apps/api/window'
 import { Store } from 'tauri-plugin-store-api'
-import { useState } from 'react'
-import { Col, Row, Switch } from 'antd'
+import { useRef, useState } from 'react'
+import Grid from '@mui/material/Grid'
+import { BottomNavigation, BottomNavigationAction, Box, Button, ButtonBase, makeStyles, MenuItem, Paper, Select, Slider, Switch, TextField, useTheme } from '@mui/material'
+import { Stack } from '@mui/system'
+
+
+function DebugSetting() {
+    return(
+    <div className="">
+        <div className="">
+            <p id="title">Setting</p>
+            <button onClick={() => ReadSetting()}>Read Setting</button>
+            <button onClick={() => WriteSetting()}>Write Setting</button>
+        </div>
+    </div>
+    )
+}
+
+function WindowSetting() {
+    return(<>
+        <Grid container alignItems="center" justifyContent="center" spacing={2}>
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Blur Effect</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <Switch/>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Opacity</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <Switch/>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Rounded Corner</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <Slider
+                valueLabelDisplay="auto"
+                step={1}
+                min={0}
+                max={20}/>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Background Image</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <Switch/>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Image Path</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+            <Button variant="contained" component="label">
+                Choose File
+            <input hidden accept="image/*" multiple type="file" />
+            </Button>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Background Color</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <Switch/>
+            </Grid>
+            <Grid item xs={2}></Grid>
+
+            <Grid item xs={2}></Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+                <p>Choose Color</p>
+            </Grid>
+            <Grid item display='flex' justifyContent="center" xs={4}>
+
+            </Grid>
+            <Grid item xs={2}></Grid>
+        </Grid>
+
+    </>)
+}
+
 
 export default function Setting() {
+    const [value, setValue] = useState(0)
+
 
     return (<>
-    <Row>
-        <Col span={24}>
-            <h1 className='text-center'>Setting</h1>
-        </Col>
-    </Row>
-    <Row>
-        <Col span={4}>
-            <p>毛玻璃效果</p>
-        </Col>
-        <Col span={4}>
-            <Switch defaultChecked={true} />
-        </Col>x
-        <Col span={4}>
-            <p>背景颜色</p>
-        </Col>
-        <Col span={4}>
-            <Switch defaultChecked={true} />
-        </Col>
-        <Col span={4}>
-            <p>字体颜色</p>
-        </Col>
-        <Col span={4}>
-            <Switch defaultChecked={true} />
-        </Col>
-    </Row>
-        <body className="">
-            <div className="">
-                <p id="title">Setting</p>
-                <button onClick={() => ReadSetting()}>Read Setting</button>
-                <button onClick={() => WriteSetting()}>Write Setting</button>
-            </div>
-        </body>
-        </>
-    )
+    <div className='container bg-blueGray/10 p-4'>
+
+        <WindowSetting />
+
+
+    </div>
+    <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }} elevation={3}>
+            <BottomNavigation
+                showLabels
+                value={value}
+                onChange={(value, newValue) => {
+                    setValue(newValue)
+                }}>
+                <BottomNavigationAction label="Window" />
+                <BottomNavigationAction label="Lyric" />
+                <BottomNavigationAction label="General" />
+            </BottomNavigation>
+    </Paper>
+    </>)
 }
 
 
@@ -68,26 +148,28 @@ interface SettingData {
     raidus: number,
     opacity: number,
 
-    //Text Related
-    textFont: string,
-    baseTextSize: number,
-    baseTextColor: string,
-    baseTextOutlineEnabled: boolean,
-    baseTextOutlineColor: string,
-    baseTextOutlineSize: number,
-    baseTextOutlineBlur: number,
-    overTextSize: number,
-    overTextColor: string,
-    overTextOutlineEnabled: boolean,
-    overTextOutlineColor: string,
-    overTextOutlineSize: number,
-
     //Background Related
     backgroundEnabled: boolean,
     backgroundColor: string,
     backgroundImage: string,
     backgroundOpacity: number,
 
+    //Text Related
+    textFont: string,
+    textSize: number,
+    baseTextColor: string,
+    baseTextOutlineEnabled: boolean,
+    baseTextOutlineColor: string,
+    baseTextOutlineSize: number,
+    baseTextOutlineBlur: number,
+    overTextColor: string,
+    overTextOutlineEnabled: boolean,
+    overTextOutlineColor: string,
+    overTextOutlineSize: number,
+
     //Backend Related
+    proxyEnabled: boolean,
+    proxyAddress: string,
     defaultService: string,
+
 }

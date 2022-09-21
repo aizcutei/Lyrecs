@@ -25,7 +25,7 @@ function IntervalBody() {
     const [lyric, setLyric] = useState(lyricNew)
     useEffect(() => {
         let interval = setInterval(() => {
-        invoke('get_next_inline_lyrics', { fixTime : 0.2 } )
+        invoke('get_next_inline_lyrics', { fixTime : 0 } )
             .then((text) => {
             //if (text == "") {
             //    setLyric("♬ ~ ~ ~");
@@ -39,7 +39,7 @@ function IntervalBody() {
             console.log(err);
             }
             );
-        }, lyric.duration * 1000);
+        }, lyric.duration * 100);
         return () => clearInterval(interval);
     }, []);
 
