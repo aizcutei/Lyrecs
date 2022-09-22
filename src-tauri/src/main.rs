@@ -7,6 +7,8 @@
 extern crate lazy_static;
 mod api;
 mod app;
+mod cache;
+mod config;
 mod get_lyrics;
 mod parse_lyric;
 mod player_info;
@@ -19,11 +21,11 @@ use tauri_plugin_store::{PluginBuilder, StoreBuilder};
 fn main() {
     env_logger::init();
 
-    let setting_data = StoreBuilder::new(".settings".parse().unwrap())
-        .default("Test-Item".to_string(), "Test-Value".into())
-        .build();
-    let runtime = tokio::runtime::Runtime::new().unwrap();
-    runtime.spawn(get_cache_manager().update());
+    // let setting_data = StoreBuilder::new(".settings".parse().unwrap())
+    //     .default("Test-Item".to_string(), "Test-Value".into())
+    //     .build();
+    tauri::async_runtime::spawn(get_cache_manager().update());
+    tauri::async_runtime::spawn(config::init());
 
     tauri::Builder::default()
         .setup(app::window::shadow_effect) // Shadow effect
