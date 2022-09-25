@@ -1,4 +1,4 @@
-use crate::api::model::Lrcx;
+use crate::api::model::{Lrcx, LyricTimeLine};
 use crate::get_lyrics::kugou::model::KugouSong;
 use crate::get_lyrics::lyric_file::LyricSource;
 use crate::get_lyrics::{lyric_file::activate_lyric, netease::model::NeteaseSong};
@@ -12,7 +12,7 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
         Ok(info) => (info),
         Err(err) => {
             warn!("error: {}", err);
-            return Default::default();
+            return json!(LyricTimeLine::default()).to_string();
         }
     };
     // kugou_save_lyric_file(&player_info).await;
@@ -30,7 +30,7 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
     json!(res.map_or_else(
         |err| {
             warn!("error: {}", err);
-            Default::default()
+            LyricTimeLine::default()
         },
         |lrc| { lrc.get_next_lyric_by_time(player_info.position) }
     ))
