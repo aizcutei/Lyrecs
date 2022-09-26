@@ -6,7 +6,7 @@ use figment::{
     providers::{Format, Yaml},
     Figment,
 };
-use log::warn;
+use log::{info, warn};
 use notify::{Config, Error, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 
@@ -14,15 +14,31 @@ use crate::cache::CacheManager;
 
 lazy_static! {
     static ref SETTINGS: CacheManager<Settings> = {
-        let conf = {
-            let conf = Figment::new().merge(Yaml::file("settings.yml")).extract();
-            if conf.is_err() {
-                println!("{:?}", conf);
-            }
-            conf.map_or(Settings::default(), |c| c)
-        };
-        CacheManager::from(conf)
+        Figment::new()
+            .merge(Yaml::file("settings.yml"))
+            .extract::<Settings>()
+            .map_or_else(
+                |err| {
+                    warn!(
+                        "Reading user settings error, restore to default {}",
+                        err.to_string()
+                    );
+                    let m = CacheManager::from(Settings::default());
+
+                    tauri::async_runtime::block_on(m.save("settings.yml"))
+                        .map_err(|err| {
+                            panic!("Error! {:?}", err);
+                        })
+                        .unwrap();
+                    m
+                },
+                CacheManager::from,
+            )
     };
+}
+
+pub async fn get_settings_manager() -> &'static CacheManager<Settings> {
+    &SETTINGS
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -88,7 +104,7 @@ pub async fn init() {
                 println!("update!");
                 SETTINGS.set_fresh(false).await;
                 SETTINGS.update().await;
-                println!("{:?}", SETTINGS.get_cache().await);
+                info!("{:?}", SETTINGS.get_cache().await);
             }
             Err(e) => {
                 warn!("channel recv error {}", e);

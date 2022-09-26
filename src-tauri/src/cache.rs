@@ -1,4 +1,10 @@
-use tokio::sync::{Mutex, MutexGuard};
+use anyhow::{Ok, Result as AnyResult};
+use serde::Serialize;
+use tokio::{
+    fs::OpenOptions,
+    io::{AsyncWrite, AsyncWriteExt},
+    sync::{Mutex, MutexGuard},
+};
 
 pub struct CacheManager<T> {
     pub fresh: Mutex<bool>,
@@ -31,5 +37,22 @@ impl<T: Default> CacheManager<T> {
     pub async fn set_fresh(&self, fresh: bool) {
         let mut f = self.fresh.lock().await;
         *f = fresh;
+    }
+}
+
+impl<T: Serialize> CacheManager<T> {
+    pub async fn save(&self, path: &str) -> AnyResult<()> {
+        let cache = self.cache.lock().await;
+
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(path)
+            .await?;
+        let s = serde_yaml::to_string(&*cache)?;
+        file.write_all(s.as_bytes()).await?;
+        Ok(())
     }
 }

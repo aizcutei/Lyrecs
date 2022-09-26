@@ -15,7 +15,6 @@ mod player_info;
 use api::{connect, lyric_line};
 use std::env;
 
-use get_lyrics::cache::get_cache_manager;
 use tauri_plugin_store::{PluginBuilder, StoreBuilder};
 
 fn main() {
@@ -24,7 +23,7 @@ fn main() {
     // let setting_data = StoreBuilder::new(".settings".parse().unwrap())
     //     .default("Test-Item".to_string(), "Test-Value".into())
     //     .build();
-    tauri::async_runtime::spawn(get_cache_manager().update());
+    tauri::async_runtime::spawn(get_lyrics::cache::get_cache_manager().update());
     tauri::async_runtime::spawn(config::init());
 
     tauri::Builder::default()
