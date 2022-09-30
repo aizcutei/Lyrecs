@@ -18,6 +18,7 @@ tauri-build = { version = "1.1.1", features = [] }
 
 [dependencies]
 serde_json = "1.0"
+serde_yaml = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.1.1", features = ["api-all", "macos-private-api", "system-tray"] }
 window-vibrancy = "0.3.0"
@@ -36,6 +37,8 @@ base64 = "0.13.0"
 flate2 = "1.0"
 tauri-plugin-window-state = "0.1"
 tauri-plugin-positioner = "1.0"
+figment = {version = "0.10", features = ["yaml", "env", "test"] }
+notify =  "5.0.0"
 
 [dependencies.tauri-plugin-store]
 git = "https://github.com/tauri-apps/tauri-plugin-store"
