@@ -74,7 +74,6 @@ impl Lrcx {
     }
 
     pub fn get_next_lyric_by_time(&self, time: f64) -> LyricTimeLine {
-        info!("get full time line by time: {}", time);
         let mut index = self.find_time_line_index(time);
         if index.is_none() {
             warn!("lyric time line not found");
@@ -82,7 +81,6 @@ impl Lrcx {
         }
 
         let next_full_lrc = &self.lyric_body[index.unwrap()];
-        info!("next {}", next_full_lrc.line.text.len());
         next_full_lrc.clone()
     }
 }

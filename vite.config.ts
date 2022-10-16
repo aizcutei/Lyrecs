@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import Unocss from 'unocss/vite'
 import react from '@vitejs/plugin-react'
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import vitePluginImp from 'vite-plugin-imp'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -48,14 +47,6 @@ export default defineConfig({
                     -${d as unknown as number * 0.3827}px -${d as unknown as number * 0.9239}px ${w}px ${S}`
                 })]
                 ]
-        }),
-        vitePluginImp({
-            libList: [
-                {
-                    libName: "antd",
-                    style: (name) => `antd/lib/${name}/style/index.less`,
-                },
-            ],
         }),
     ],
     css: {

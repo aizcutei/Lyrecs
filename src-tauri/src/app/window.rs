@@ -1,6 +1,6 @@
 use tauri::{App, Manager};
 use window_shadows::set_shadow;
-use window_vibrancy::{apply_blur, apply_vibrancy, NSVisualEffectMaterial};
+use window_vibrancy::{apply_blur, apply_vibrancy, NSVisualEffectMaterial, NSVisualEffectState};
 
 pub fn shadow_effect(app: &mut App) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let main_window = app.get_window("main").unwrap();
@@ -13,7 +13,8 @@ pub fn vibrancy_effect(app: &mut App) -> std::result::Result<(), Box<dyn std::er
     let main_window = app.get_window("main").unwrap();
 
     #[cfg(target_os = "macos")]
-    apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, 1, 10.0)
+    //apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, 1, 10.0)
+    apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, Some(NSVisualEffectState::Active), Some(10.0))
         .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
     #[cfg(target_os = "windows")]

@@ -101,7 +101,10 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         ));
     }
     let track_info = track_info.unwrap();
-    let position = itunes.get_player_position().unwrap();
+    let position = itunes.get_player_position();
+    if position.is_none() {
+        return Err(anyhow::anyhow!("No song is playing "));
+    }
 
     Ok(PlayerInfo {
         track: Song {
@@ -111,7 +114,7 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
         },
         state: itunes.is_playing().to_string(),
         duration: track_info.duration as f64,
-        position: position.as_secs_f64(),
+        position: position.unwrap().as_secs_f64(),
     })
 }
 

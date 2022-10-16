@@ -1,16 +1,16 @@
-use std::cell::{RefCell, Cell, Ref};
-use std::fs::File;
-use std::io::Read;
-use tokio::sync::{Mutex, MutexGuard};
-use std::path::PathBuf;
-use anyhow::{Result as AnyResult, Ok};
+use anyhow::{Ok, Result as AnyResult};
 use directories::UserDirs;
 use log::info;
 use reqwest::Client;
+use std::cell::{Cell, Ref, RefCell};
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
+use tokio::sync::{Mutex, MutexGuard};
 
 use crate::api::model::Lrcx;
-use crate::get_lyrics::kugou::get_lyrics::kugou_save_lyric_file;
-use crate::get_lyrics::netease::get_lyrics::save_lyric_file;
+use crate::get_lyrics::kugou::get_lyrics::save_lyric_file as kugou_save_lyric_file;
+use crate::get_lyrics::netease::get_lyrics::save_lyric_file as netease_save_lyric_file;
 
 use super::cache::get_cache_manager;
 use super::kugou::model::KugouSong;
@@ -34,8 +34,8 @@ pub fn get_client_provider() -> &'static ClientProvider {
 }
 
 impl ClientProvider {
-    pub fn new() -> Self{
-        ClientProvider{
+    pub fn new() -> Self {
+        ClientProvider {
             client: Mutex::new(Client::new()),
         }
     }
@@ -44,14 +44,13 @@ impl ClientProvider {
         self.client.lock().await
     }
 
-    pub async fn set(&self, client:Client){
+    pub async fn set(&self, client: Client) {
         let mut c = self.client.lock().await;
         *c = client;
     }
 }
 
-
-pub fn lyric_file_path(artist : &str, title : &str) -> PathBuf {
+pub fn lyric_file_path(artist: &str, title: &str) -> PathBuf {
     let user_dirs = UserDirs::new().unwrap();
     let document_path = user_dirs.document_dir().unwrap();
     let lyrecs_path = document_path.join("Lyrecs");
@@ -66,20 +65,19 @@ pub fn lyric_file_path(artist : &str, title : &str) -> PathBuf {
     lyrecs_path.join(file_name)
 }
 
-
-pub fn lyric_file_exists(artist : &str, title : &str) -> bool {
+pub fn lyric_file_exists(artist: &str, title: &str) -> bool {
     lyric_file_path(artist, title).exists()
 }
 
 pub async fn activate_lyric(song: LyricSource) -> AnyResult<Lrcx> {
     let cache_manager = get_cache_manager();
     if cache_manager.is_fresh().await {
-        return Ok(cache_manager.get_cache().await.clone())
+        return Ok(cache_manager.get_cache().await.clone());
     }
     // if netease blabla if kugou blabla
-    let lyric_str = get_lyric_file(song).await.unwrap();
+    let lyric_str = get_lyric_file(song).await?;
     if lyric_str.is_empty() {
-        return Err(anyhow::anyhow!("lyric file is empty"))
+        return Err(anyhow::anyhow!("lyric file is empty"));
     }
     let lrc = serde_json::from_str::<Lrcx>(&lyric_str)?;
     let cache_lrc = lrc.clone();
@@ -91,16 +89,16 @@ pub async fn get_lyric_file(song: LyricSource) -> AnyResult<String> {
     let (artist, title) = match song {
         LyricSource::Netease(n) => {
             if !lyric_file_exists(&n.artist, &n.name) {
-                save_lyric_file(&n).await?;
+                netease_save_lyric_file(&n).await?;
             }
             (n.artist, n.name)
-        },
+        }
         LyricSource::Kugou(k) => {
             if !lyric_file_exists(&k.artist, &k.name) {
                 kugou_save_lyric_file(&k).await?;
             }
             (k.artist, k.name)
-        },
+        }
     };
 
     let lyric_path = lyric_file_path(&artist, &title);
@@ -109,4 +107,3 @@ pub async fn get_lyric_file(song: LyricSource) -> AnyResult<String> {
     file.read_to_string(&mut lyric)?;
     Ok(lyric)
 }
-

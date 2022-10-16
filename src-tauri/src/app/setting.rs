@@ -1,3 +1,4 @@
+use tauri::{App, AppHandle};
 use tauri_plugin_store::{StoreBuilder, Store};
 
 pub fn init_setting() -> Store {
