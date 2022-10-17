@@ -1,18 +1,16 @@
-
-use std::process;
-use anyhow::Result as AnyResult;
-use serde_json::Value;
-use log::{info, warn};
 use crate::get_lyrics::song::Song;
+use anyhow::Result as AnyResult;
+use log::{info, warn};
+use serde_json::Value;
+use std::process;
 
 #[derive(Debug, Default, Clone)]
 pub struct PlayerInfo {
-	pub track: Song,
+    pub track: Song,
     pub state: String,
     pub duration: f64,
     pub position: f64,
 }
-
 
 #[cfg(target_os = "macos")]
 pub async fn get_player_info() -> AnyResult<PlayerInfo> {
@@ -43,84 +41,85 @@ pub async fn get_player_info() -> AnyResult<PlayerInfo> {
 
     if query_running_result.stdout != [116, 114, 117, 101, 10] {
         let query_playing_result = process::Command::new("osascript")
-        .arg("-l")
-        .arg("JavaScript")
-        .arg("-e")
-        .arg(&query_playing_status_script)
-        .output()
-        .expect("OSA process failed to execute");
+            .arg("-l")
+            .arg("JavaScript")
+            .arg("-e")
+            .arg(&query_playing_status_script)
+            .output()
+            .expect("OSA process failed to execute");
 
-        let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout).map_or_else(|err|{
-            warn!("No song is playing or Music is not running{}", err);
-            Value::Null
-        }, |player_info| player_info);
+        let player_info_result: Value = serde_json::from_slice(&query_playing_result.stdout)
+            .map_or_else(
+                |err| {
+                    warn!("No song is playing or Music is not running{}", err);
+                    Value::Null
+                },
+                |player_info| player_info,
+            );
         if player_info_result.is_null() {
-            return Err(anyhow::anyhow!("No song is playing or Music is not running"))
+            return Err(anyhow::anyhow!(
+                "No song is playing or Music is not running"
+            ));
         }
 
         let player_info = PlayerInfo {
             track: Song {
-                title: player_info_result["title"].as_str().unwrap_or("").to_string(),
-                artist: player_info_result["artist"].as_str().unwrap_or("").to_string(),
-                album: player_info_result["album"].as_str().unwrap_or("").to_string(),
+                title: player_info_result["title"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                artist: player_info_result["artist"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                album: player_info_result["album"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
             },
             state: player_info_result["state"].as_str().unwrap().to_string(),
             duration: player_info_result["duration"].as_f64().unwrap(),
             position: player_info_result["position"].as_f64().unwrap(),
         };
 
-        return Ok(player_info)
+        return Ok(player_info);
     }
     Err(anyhow::anyhow!("Apple Music is not running"))
-
 }
-
 
 #[cfg(target_os = "windows")]
 pub async fn get_player_info() -> AnyResult<PlayerInfo> {
-    use std::{io::ErrorKind};
-
     use anyhow::Ok;
-    use windows::Media::Control;
-    /* UWP API, desktop API in investigation */
-    let session = Control::GlobalSystemMediaTransportControlsSessionManager::RequestAsync();
-    let current_session = &(session?.await?.GetCurrentSession()?);
-    if current_session.SourceAppUserModelId()?.to_string() != get_app_id_by_name("iTunes") {
-        return Err(anyhow::Error::new(std::io::Error::new(ErrorKind::Other, "itunes not running")))
-    };
-    let track_info = &current_session.TryGetMediaPropertiesAsync()?.await?;
-    let timeline = &current_session.GetTimelineProperties()?;
-    let status = &current_session.GetPlaybackInfo()?.PlaybackStatus()?.0;
+
+    use super::windows::ITunes;
+
+    let mut itunes = ITunes::new()?;
+    let track_info = itunes.get_current_track_info();
+    if track_info.is_none() {
+        return Err(anyhow::anyhow!(
+            "No song is playing or iTunes is not running"
+        ));
+    }
+    let track_info = track_info.unwrap();
+    let position = itunes.get_player_position();
+    if position.is_none() {
+        return Err(anyhow::anyhow!("No song is playing "));
+    }
 
     Ok(PlayerInfo {
         track: Song {
-            title: track_info.Title()?.to_string(),
-            artist:track_info.Artist()?.to_string(),
-            album: track_info.AlbumTitle()?.to_string(),
+            title: track_info.name,
+            artist: track_info.artist,
+            album: track_info.album,
         },
-        state: status.to_string(),
-        duration: timeline.EndTime()?.Duration as f64 - timeline.StartTime()?.Duration as f64,
-        position: timeline.Position()?.Duration as f64,
+        state: itunes.is_playing().to_string(),
+        duration: track_info.duration as f64,
+        position: position.unwrap().as_secs_f64(),
     })
 }
 
 #[cfg(target_os = "windows")]
-fn get_app_id_by_name(name: &str ) -> String {
-    use std::process::Command;
-    use std::{str, fs};
-    let args:[&str; 8] = ["-C", "get-startapps", "iTunes", "|" , "out-file","out.txt", "-encoding", "utf8"];
-    Command::new("powershell")
-        .args(args)
-        .output()
-        .expect("Failed to execute powershell command");
-    let res = fs::read_to_string("out.txt").expect("Something went wrong reading the file");
-    res.split('\n').find(|line| line.starts_with(name))
-                    .and_then(|s| s.strip_prefix(name))
-                    .map_or(String::new(), |s| String::from(s.trim()))
-}
-
-#[cfg(target_os = "windows")]
-pub async fn get_player_info_desktop(){
+pub async fn get_player_info_desktop() {
     unimplemented!()
 }
 
@@ -135,28 +134,30 @@ mod tests {
 
     #[test]
     fn test_get_player_info() {
-        use log::{ warn};
-        println!("asdsadasda");
+        use log::warn;
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .unwrap()
             .block_on(async {
-                println!("ttttttt");
                 let a = get_player_info().await;
                 match a {
-                    Ok(res) => {println!("title{} {} {}", res.track.title, res.track.album, res.track.artist);},
-                    Err(err) => {println!("err{}", err.to_string())},
+                    Ok(res) => {
+                        println!(
+                            "{} {} {} {} {} {}",
+                            res.track.title,
+                            res.track.album,
+                            res.track.artist,
+                            res.duration,
+                            res.position,
+                            res.state,
+                        );
+                    }
+                    Err(err) => {
+                        println!("err{}", err.to_string())
+                    }
                 }
-                println!("sssssss");
-                warn!("asdasdad");
             });
         // let player_info = get_player_info();
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_get_app_id() {
-        println!("{}",get_app_id_by_name("iTunes"));
     }
 }

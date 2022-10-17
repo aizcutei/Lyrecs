@@ -100,7 +100,9 @@ mod tests {
                     println!("error: {}", err);
                     Default::default()
                 },
-                |lrc| { lrc.get_next_lyric_by_time(player_info.position) }
+                |lrc| {
+                    let time_line = lrc.get_next_lyric_by_time(player_info.position);
+                }
             ))
             .to_string();
             // let result = get_next_inline_lyrics(0.0).await;
