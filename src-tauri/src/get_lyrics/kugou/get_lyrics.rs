@@ -25,7 +25,7 @@ const KEYS: [u8; 16] = [
     64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105,
 ];
 
-async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
+pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
     let requrl = SEARCH_URL.to_string() + key_word + "&pagesize=" + &number.to_string();
     let client = get_client_provider().get().await;
 

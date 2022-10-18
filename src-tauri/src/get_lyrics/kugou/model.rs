@@ -20,7 +20,7 @@ pub struct KugouSong {
 }
 
 #[derive(Debug, Clone)]
-pub struct KugouSongList(Vec<KugouSong>);
+pub struct KugouSongList(pub Vec<KugouSong>);
 
 impl RemoteSongTrait for KugouSong {
     fn new(song: &Value) -> Self {

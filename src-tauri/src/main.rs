@@ -12,7 +12,7 @@ mod config;
 mod get_lyrics;
 mod parse_lyric;
 mod player_info;
-use api::{connect, lyric_line};
+use api::{connect, lyric_line, search};
 use std::env;
 
 use tauri_plugin_store::{PluginBuilder, StoreBuilder};
@@ -40,6 +40,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             connect::connect_test,
             lyric_line::get_next_inline_lyrics,
+            search::search,
+            search::search_lyric,
         ])
         .run(tauri::generate_context!())
         .expect("Error while running tauri application in main");

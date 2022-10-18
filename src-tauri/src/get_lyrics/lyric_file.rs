@@ -20,6 +20,7 @@ lazy_static! {
     static ref CLIENT_PROVIDER: ClientProvider = ClientProvider::new();
 }
 
+#[derive(Debug)]
 pub enum LyricSource {
     Netease(NeteaseSong),
     Kugou(KugouSong),
