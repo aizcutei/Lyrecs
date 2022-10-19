@@ -272,7 +272,7 @@ pub async fn save_lyric_file(song: &NeteaseSong) -> AnyResult<()> {
     info!("song_lyrics {:?}", song_lyrics);
 
     let mut lrcx = parse_netease_lyric(&song_lyrics)?;
-    info!("writing lyric file of length {}", lrcx.lyric_body.len());
+    info!("writing lyric file of length {} of {}-{}", lrcx.lyric_body.len(), song.artist,song.name );
 
     let mut file = File::create(lyric_file_path(&song.artist, &song.name))?;
 

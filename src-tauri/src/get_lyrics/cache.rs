@@ -13,6 +13,22 @@ pub fn get_cache_manager() -> &'static CacheManager<Lrcx> {
 }
 
 impl CacheManager<Lrcx> {
+    #[cfg(target_os = "macos")]
+    pub async fn update(&self) {
+        use std::{ffi::{ c_void}};
+        unsafe{
+            extern "C" fn callback(_:c_void) {
+                tauri::async_runtime::block_on(async {
+                    get_cache_manager().set_fresh(false).await});
+            }
+
+            extern "C" {
+                fn register_playstate_change_callback(callback: extern "C" fn(_:c_void));
+            }
+            register_playstate_change_callback(callback);
+    }
+    }
+    #[cfg(target_os = "windows")]
     pub async fn update(&self) -> ! {
         let mut current_song: String = Default::default();
         loop {
