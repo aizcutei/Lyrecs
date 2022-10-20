@@ -5,6 +5,9 @@ use crate::get_lyrics::{lyric_file::activate_lyric, netease::model::NeteaseSong}
 use crate::player_info::link_system::get_player_info;
 use log::warn;
 use serde_json::json;
+use tauri::async_runtime::Mutex;
+
+static get_lyric_lock: Mutex<i32> = Mutex::const_new(0);
 
 #[tauri::command]
 pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
@@ -26,7 +29,9 @@ pub async fn get_next_inline_lyrics(fix_time: f64) -> String {
         album: player_info.track.album.clone(),
         id: "".to_string(),
     };
+    let lock = get_lyric_lock.lock().await;
     let res: Result<Lrcx, anyhow::Error> = activate_lyric(LyricSource::Netease(n)).await;
+    drop(lock);
     json!(res.map_or_else(
         |err| {
             warn!("error: {}", err);
