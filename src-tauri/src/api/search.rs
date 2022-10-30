@@ -25,10 +25,10 @@ lazy_static! {
 }
 
 #[tauri::command]
-pub async fn search(title: String, artist: String) -> String {
+pub async fn search(content: String) -> String {
     // is it enough to use only title
-    let kugou = kugou::get_lyrics::get_song_list(&title, 5).await;
-    let netease = netease::get_lyrics::get_song_list(&title, 5).await;
+    let kugou = kugou::get_lyrics::get_song_list(&content, 5).await;
+    let netease = netease::get_lyrics::get_song_list(&content, 5).await;
     let mut rsp = SearchResponse::with_capacity(10);
     if let Ok(k) = kugou {
         for song in k.0 {
@@ -37,7 +37,6 @@ pub async fn search(title: String, artist: String) -> String {
                 artist: song.artist.clone(),
                 source: "Kugou".to_string(),
             });
-            eprintln!("accee key{}", song.access_key);
             current_search
                 .get_cache()
                 .await
