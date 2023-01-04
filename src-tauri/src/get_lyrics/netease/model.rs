@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use serde_json::Value;
 
-use crate::get_lyrics::song::RemoteSongTrait;
+use crate::{api::model::Lrcx, get_lyrics::song::RemoteSongTrait};
 
 //----- Netease ------
 #[derive(Debug, Default, Clone)]

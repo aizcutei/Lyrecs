@@ -1,8 +1,10 @@
 use log::info;
-use tauri::{SystemTray, CustomMenuItem, SystemTrayMenu, AppHandle, SystemTrayMenuItem, SystemTrayEvent, Manager};
+use tauri::{
+    AppHandle, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
+    SystemTrayMenuItem,
+};
 
 pub fn tray_icon() -> SystemTray {
-
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let setting = CustomMenuItem::new("setting".to_string(), "Setting");
     let search = CustomMenuItem::new("search".to_string(), "Search");
@@ -16,7 +18,6 @@ pub fn tray_icon() -> SystemTray {
 }
 
 pub fn tray_handler(app: &AppHandle, event: SystemTrayEvent) {
-
     match event {
         SystemTrayEvent::LeftClick {
             position: _,
@@ -50,8 +51,16 @@ pub fn tray_handler(app: &AppHandle, event: SystemTrayEvent) {
                         let search_window = tauri::WindowBuilder::new(
                             app,
                             "search",
-                            tauri::WindowUrl::App("search".into())
-                            ).title("Search").decorations(true).resizable(true).transparent(false).center().build().unwrap();
+                            tauri::WindowUrl::App("search".into()),
+                        )
+                        .title("Search")
+                        .inner_size(700.0, 480.0)
+                        .decorations(true)
+                        .resizable(true)
+                        .transparent(false)
+                        .center()
+                        .build()
+                        .unwrap();
                     }
                 }
                 "setting" => {
@@ -61,8 +70,15 @@ pub fn tray_handler(app: &AppHandle, event: SystemTrayEvent) {
                         let setting_window = tauri::WindowBuilder::new(
                             app,
                             "setting",
-                            tauri::WindowUrl::App("setting".into())
-                            ).title("Setting").decorations(true).resizable(true).transparent(false).center().build().unwrap();
+                            tauri::WindowUrl::App("setting".into()),
+                        )
+                        .title("Setting")
+                        .decorations(true)
+                        .resizable(true)
+                        .transparent(false)
+                        .center()
+                        .build()
+                        .unwrap();
                     }
                 }
                 _ => {}

@@ -42,6 +42,7 @@ fn main() {
             lyric_line::get_next_inline_lyrics,
             search::search,
             search::search_lyric,
+            search::apply_search_result,
         ])
         .run(tauri::generate_context!())
         .expect("Error while running tauri application in main");

@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import React, { useRef, useState } from "react";
+import { LegacyRef } from "react";
 
 interface SearchResult {
   title: string;
@@ -9,19 +10,21 @@ interface SearchResult {
 
 const rows: string[] = [];
 
-function doEvent(obj, event) {
-  var event = new Event(event, { target: obj, bubbles: true });
-  return obj ? obj.dispatchEvent(event) : false;
+function doEvent(obj: HTMLElement, event: string) {
+  var e = new Event(event, { bubbles: true });
+  return obj ? obj.dispatchEvent(e) : false;
 }
 
 export default function Search() {
   let title = "";
   let artist = "";
   const [source, setSource] = useState("");
-  const searchInputRef = useRef(null);
-  const [searchResults, setSearchResults] = useState([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [tableSelectIdx, setTableSelectIdx] = useState(-1);
+  const [searchResults, setSearchResults] = useState([[""]]);
+  const [preview, setPreview] = useState("");
   return (
-    <div className="h-full w-full">
+    <div className="container h-full w-full min-w700px">
       <div className="grid grid-cols-12 gap-2 content-center">
         <div className="col-span-8 justify-self-stretch">
           <input
@@ -47,21 +50,21 @@ export default function Search() {
           </select>
         </div>
         {/* A search button that is a little smaller than the textfield */}
-        <div className="col-span-2 justify-self-stretch">
+        <div className="col-span-1  justify-self-stretch">
           <button
             type="button"
-            className="transition duration-100 active:bg-blue-800  bg-blue-500 w-full h-full my-0.8 self-stretch border rounded text-white border-blue-600 hover:bg-blue-8 focus:ring"
+            className="transition duration-100 text-0.1 disabled:bg-gray-4 disabled:hover:bg-gray-5  active:bg-blue-800  bg-blue-500 w-full h-full my-0.8 self-stretch border rounded text-white border-blue-600 hover:bg-blue-8 focus:ring"
             onClick={() => {
               console.log(searchInputRef.current?.value);
               invoke("search", {
                 content: searchInputRef.current?.value,
               }).then((value) => {
                 let searchResults: SearchResult[] = JSON.parse(value as string);
-                let s: String[][] = searchResults.map((i) => {
+                let s: string[][] = searchResults.map((i) => {
                   return [i.title, i.artist, i.source];
                 });
                 setSearchResults(s);
-
+                setTableSelectIdx(-1);
                 console.log(value);
               });
             }}
@@ -69,11 +72,28 @@ export default function Search() {
             Search
           </button>
         </div>
-
-        <div className="col-span-8 w-full mx-1 my-0.5 border  justify-self-stretch">
+        <div className="col-span-1 mr-0.8 justify-self-stretch">
+          <button
+            type="button"
+            className="transition duration-100 text-0.1  disabled:bg-gray-4 disabled:hover:bg-gray-5 bg-blue-500 w-full h-full my-0.8 self-stretch border rounded text-white border-blue-600  focus:ring"
+            disabled={tableSelectIdx < 0}
+            onClick={() => {
+              invoke("apply_search_result", {
+                index: tableSelectIdx,
+              }).catch((e) => {
+                console.error(e);
+              });
+            }}
+          >
+            Apply
+          </button>
+        </div>
+        <div className="col-span-8 w-full mx-1 my-0.5 border justify-self-stretch">
           <CompactTable
             title={["Title", "Artist", "Source"]}
             data={searchResults}
+            setIdx={setTableSelectIdx}
+            setPreview={setPreview}
           ></CompactTable>
         </div>
         <div className="col-span-4  w-full">
@@ -81,6 +101,7 @@ export default function Search() {
             id="lyric_preview"
             className="self-center w-full text-left rounded text-white py-0 bg-blue-300 h-full mx-0.45"
             readOnly
+            value={preview}
           ></textarea>
         </div>
       </div>
@@ -89,7 +110,12 @@ export default function Search() {
 }
 
 //title: String[], data: Object[]
-export function CompactTable(props: { title: String[]; data: String[][] }) {
+export function CompactTable(props: {
+  title: String[];
+  data: String[][];
+  setIdx: React.Dispatch<React.SetStateAction<number>>;
+  setPreview: React.Dispatch<React.SetStateAction<string>>;
+}) {
   let [currentSelected, setCurrentSelected] = useState(-1);
   const selectedStyle = {
     backgroundColor: "rgba(165, 243, 252, 255)",
@@ -110,16 +136,19 @@ export function CompactTable(props: { title: String[]; data: String[][] }) {
               className="hover:bg-cyan-100"
               key={index}
               style={currentSelected == index ? selectedStyle : {}}
-              //   selected={currentSelected == index}
-              onClick={(e) => {
+              onClick={() => {
                 setCurrentSelected(index);
+                props.setIdx(index);
                 invoke("search_lyric", {
                   index: index,
-                }).then((text) => {
-                  var preview = document.getElementById("lyric_preview");
-                  preview.value = text as string;
-                  doEvent(preview, "input");
-                });
+                })
+                  .then((text) => {
+                    props.setPreview(text as string);
+                  })
+                  .catch((e) => {
+                    props.setPreview("");
+                    console.error(e);
+                  });
               }}
             >
               {ritem.map((item) => (
