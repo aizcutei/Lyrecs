@@ -1,14 +1,13 @@
 use anyhow::{Ok, Result as AnyResult};
 use directories::UserDirs;
-use log::info;
 use reqwest::Client;
-use std::cell::{Cell, Ref, RefCell};
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use std::path::PathBuf;
 use tokio::sync::{Mutex, MutexGuard};
 
-use crate::api::model::Lrcx;
+use crate::api::model::{Lrcx, LyricTimeLine};
 use crate::get_lyrics::kugou::get_lyrics::save_lyric_file as kugou_save_lyric_file;
 use crate::get_lyrics::netease::get_lyrics::save_lyric_file as netease_save_lyric_file;
 
@@ -20,6 +19,7 @@ lazy_static! {
     static ref CLIENT_PROVIDER: ClientProvider = ClientProvider::new();
 }
 
+#[derive(Debug)]
 pub enum LyricSource {
     Netease(NeteaseSong),
     Kugou(KugouSong),
@@ -106,4 +106,20 @@ pub async fn get_lyric_file(song: LyricSource) -> AnyResult<String> {
     let mut lyric = String::new();
     file.read_to_string(&mut lyric)?;
     Ok(lyric)
+}
+
+pub fn write_lyric_file(filename: PathBuf, mut lrcx: Lrcx) -> AnyResult<()> {
+    let mut file = File::create(filename)?;
+
+    let mut default_timeline: LyricTimeLine = Default::default();
+    if lrcx.lyric_body.is_empty() {
+        default_timeline
+            .line
+            .set_text("No Lyric for this song".to_string());
+    }
+    lrcx.lyric_body.insert(0, default_timeline);
+    let serial = serde_json::to_string(&lrcx)?;
+    write!(file, "{}", serial)?;
+
+    Ok(())
 }

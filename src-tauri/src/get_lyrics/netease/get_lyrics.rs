@@ -1,43 +1,39 @@
 use std::collections::BTreeSet;
-use std::fs::File;
-use std::io::{Write, Read};
 
-use regex::Regex;
-use reqwest::header::{COOKIE, CONTENT_TYPE, USER_AGENT};
-use serde_json::Value;
 use anyhow::Ok;
 use anyhow::Result as AnyResult;
-use strsim::levenshtein;
 use log::info;
+use regex::Regex;
+use reqwest::header::{CONTENT_TYPE, COOKIE, USER_AGENT};
+use serde_json::Value;
+use strsim::levenshtein;
 
-use crate::get_lyrics::lyric_file::{lyric_file_path, lyric_file_exists};
 use super::model::{NeteaseSong, NeteaseSongList, NeteaseSongLyrics};
-use crate::api::model::{Lrcx, IDTag, LyricTimeLine};
+use crate::api::model::{IDTag, Lrcx, LyricTimeLine};
+use crate::get_lyrics::lyric_file::{lyric_file_exists, lyric_file_path, write_lyric_file};
+use crate::get_lyrics::song::{Parsable, RemoteSongTrait};
 use crate::parse_lyric::utils::time_tag_to_time_f64;
-use crate::get_lyrics::song::{RemoteSongTrait};
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
 const COOKIE_STRING: &str = "NMTID=1";
 const SEARCH_URL: &str = "http://music.163.com/api/search/pc?type=1&offset=0&s=";
 const LYRIC_URL: &str = "http://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=";
-lazy_static!(
+lazy_static! {
     static ref LRC_METATAG_REGEX: Regex = Regex::new(r#"\[[a-z]+\]"#).unwrap();
     static ref LRC_TIMELINE_REGEX: Regex = Regex::new(r#"\[[0-9]+:[0-9]+.[0-9]+\]"#).unwrap();
-);
+}
 
-async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
-
+pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList> {
     let requrl = SEARCH_URL.to_string() + key_word + "&limit=" + &number.to_string();
 
-    let client = reqwest::Client::builder()
-    //.proxy(reqwest::Proxy::http("http://127.0.0.1:7890")?)
-    //.proxy(reqwest::Proxy::https("https://127.0.0.1:7890")?)
-    .build().unwrap();
+    let client = reqwest::Client::builder().build().unwrap();
 
-    let resp = client.post(requrl)
+    let resp = client
+        .post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
-        .send().await?;
+        .send()
+        .await?;
 
     //println!("{:?}", res.text());
 
@@ -62,7 +58,6 @@ async fn get_song_list(key_word: &str, number: i32) -> AnyResult<NeteaseSongList
 }
 
 pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> {
-
     if song.is_empty() {
         return Err(anyhow::anyhow!("No search result"));
     }
@@ -70,11 +65,13 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
     let requrl = LYRIC_URL.to_string() + &song.id.to_string();
 
     let client = reqwest::Client::new();
-    let res = client.post(requrl)
+    let res = client
+        .post(requrl)
         .header(COOKIE, COOKIE_STRING)
         .header(USER_AGENT, USER_AGENT_STRING)
         .header(CONTENT_TYPE, "application/json")
-        .send().await?;
+        .send()
+        .await?;
 
     let re = res.text().await.unwrap();
     let json: Value = serde_json::from_str(re.as_str())?;
@@ -89,7 +86,8 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
         if lyc.get("lyric").unwrap().is_null() {
             lrc.lyric = "[00:00.000] This Music Has No Lyric".to_string();
         } else {
-            lrc.lyric = lyc.get("lyric").unwrap().to_string().replace("\\n", "\n"); // replace \\n to \n
+            lrc.lyric = lyc.get("lyric").unwrap().to_string().replace("\\n", "\n");
+            // replace \\n to \n
         };
     } else {
         lrc.lyric = "[00:00.000] Get lyric Error".to_string();
@@ -99,7 +97,11 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
         if tlyric.get("lyric").unwrap().is_null() {
             lrc.tlyric = "".to_string();
         } else {
-            lrc.tlyric = tlyric.get("lyric").unwrap().to_string().replace("\\n", "\n");
+            lrc.tlyric = tlyric
+                .get("lyric")
+                .unwrap()
+                .to_string()
+                .replace("\\n", "\n");
         };
     } else {
         lrc.tlyric = "".to_string();
@@ -109,14 +111,17 @@ pub async fn get_song_lyric(song: &NeteaseSong) -> AnyResult<NeteaseSongLyrics> 
         if klyric.get("lyric").unwrap().is_null() {
             lrc.klyric = "".to_string();
         } else {
-            lrc.klyric = klyric.get("lyric").unwrap().to_string().replace("\\n", "\n");
+            lrc.klyric = klyric
+                .get("lyric")
+                .unwrap()
+                .to_string()
+                .replace("\\n", "\n");
         };
     } else {
         lrc.klyric = "".to_string();
     }
 
     Ok(lrc)
-
 }
 
 pub async fn get_default_song(song_name: &NeteaseSong) -> NeteaseSong {
@@ -168,43 +173,44 @@ pub async fn get_best_match_song(song_name: &NeteaseSong) -> NeteaseSong {
     best_match_song
 }
 
-pub fn parse_netease_lyric(s: &NeteaseSongLyrics) -> AnyResult<Lrcx> {
-    let mut lrcx = {
-        let mut lrcx: Lrcx = Default::default();
-        let lrc_metatag = parse_metatag(s.lyric.clone().trim_start_matches('"'), "\n");
-        let mut original = parse_lyric_text(s.lyric.clone().trim_start_matches('"'), "\n");
-        let translation = parse_lyric_text(s.tlyric.clone().trim_start_matches('"'), "\n");
-        let pronuce = parse_lyric_text(s.klyric.clone().trim_start_matches('"'), "\n");
-        let  (mut p, mut t) = (0,0);
-        original.iter_mut().for_each(|timeline| {
-            if p < pronuce.len() {
-                if pronuce[p].start - timeline.start < 0.1 {
-                    timeline.line.pronunciation = pronuce[p].line.text.clone();
-                    p += 1;
-                } else {
-                    timeline.line.pronunciation = "".to_string();
+impl NeteaseSongLyrics {
+    pub fn to_lrcx(&self) -> Lrcx {
+        let mut lrcx = {
+            let mut lrcx: Lrcx = Default::default();
+            let lrc_metatag = parse_metatag(self.lyric.clone().trim_start_matches('"'), "\n");
+            let mut original = parse_lyric_text(self.lyric.clone().trim_start_matches('"'), "\n");
+            let translation = parse_lyric_text(self.tlyric.clone().trim_start_matches('"'), "\n");
+            let pronuce = parse_lyric_text(self.klyric.clone().trim_start_matches('"'), "\n");
+            let (mut p, mut t) = (0, 0);
+            original.iter_mut().for_each(|timeline| {
+                if p < pronuce.len() {
+                    if pronuce[p].start - timeline.start < 0.1 {
+                        timeline.line.pronunciation = pronuce[p].line.text.clone();
+                        p += 1;
+                    } else {
+                        timeline.line.pronunciation = "".to_string();
+                    }
                 }
-            }
-            if t < translation.len() {
-                if translation[t].start - timeline.start < 0.1 {
-                    timeline.line.translation = translation[t].line.text.clone();
-                    t += 1;
-                } else {
-                    timeline.line.translation = "".to_string();
+                if t < translation.len() {
+                    if translation[t].start - timeline.start < 0.1 {
+                        timeline.line.translation = translation[t].line.text.clone();
+                        t += 1;
+                    } else {
+                        timeline.line.translation = "".to_string();
+                    }
                 }
-            }
-
-        });
-        lrcx.metadata = lrc_metatag;
-        lrcx.lyric_body = original;
+            });
+            lrcx.metadata = lrc_metatag;
+            lrcx.lyric_body = original;
+            lrcx
+        };
+        // 塞进去
+        lrcx.cal_duration_from_start();
         lrcx
-    };
-    // 塞进去
-    lrcx.cal_duration_from_start();
-    Ok(lrcx)
+    }
 }
 
-fn parse_metatag(s: &str, splitter: &str)-> BTreeSet<IDTag> {
+fn parse_metatag(s: &str, splitter: &str) -> BTreeSet<IDTag> {
     let lines: Vec<&str> = s.split(splitter).collect();
     let mut metadata: BTreeSet<IDTag> = Default::default();
     for line in lines {
@@ -215,7 +221,6 @@ fn parse_metatag(s: &str, splitter: &str)-> BTreeSet<IDTag> {
             metadata.insert(IDTag::new(tag_name.to_string(), tag_value));
             continue;
         }
-
     }
     metadata
 }
@@ -227,15 +232,24 @@ fn parse_lyric_text(lrc_string: &str, splitter: &str) -> Vec<LyricTimeLine> {
     for line in lines {
         let line = line.trim();
         if LRC_TIMELINE_REGEX.captures(line).is_some() {
-            let timestamp = LRC_TIMELINE_REGEX.captures(line).unwrap()
-                            .get(0).unwrap().as_str().to_string();
+            let timestamp = LRC_TIMELINE_REGEX
+                .captures(line)
+                .unwrap()
+                .get(0)
+                .unwrap()
+                .as_str()
+                .to_string();
 
             let mut lyric_line: LyricTimeLine = Default::default();
             let verse = line[timestamp.to_string().len()..].trim().to_string();
             lyric_line.line.text = verse.clone();
             lyric_line.line.length = verse.chars().count() as i64;
-            lyric_line.start = time_tag_to_time_f64(timestamp.trim_start_matches('[').
-                                                    to_string().trim_end_matches(']'));
+            lyric_line.start = time_tag_to_time_f64(
+                timestamp
+                    .trim_start_matches('[')
+                    .to_string()
+                    .trim_end_matches(']'),
+            );
             parsed_lines.push(lyric_line);
             continue;
         }
@@ -257,19 +271,15 @@ pub async fn save_lyric_file(song: &NeteaseSong) -> AnyResult<()> {
     let song_lyrics = get_song_lyric(&default_song).await?;
     info!("song_lyrics {:?}", song_lyrics);
 
-    let mut lrcx = parse_netease_lyric(&song_lyrics)?;
-    info!("writing lyric file of length {}", lrcx.lyric_body.len());
+    let lrcx = song_lyrics.to_lrcx();
+    info!(
+        "writing lyric file of length {} of {}-{}",
+        lrcx.lyric_body.len(),
+        song.artist,
+        song.name
+    );
 
-    let mut file = File::create(lyric_file_path(&song.artist, &song.name))?;
-
-    let mut default_timeline: LyricTimeLine = Default::default();
-    if lrcx.lyric_body.is_empty() {
-        default_timeline.line.set_text("No Lyric for this song".to_string());
-    }
-    lrcx.lyric_body.insert(0, default_timeline);
-    let serial = serde_json::to_string(&lrcx)?;
-    write!(file, "{}", serial)?;
+    write_lyric_file(lyric_file_path(&song.artist, &song.name), lrcx)?;
 
     Ok(())
 }
-

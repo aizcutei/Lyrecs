@@ -2,7 +2,7 @@ use std::ops::Index;
 
 use serde_json::Value;
 
-use crate::get_lyrics::song::{RemoteSongTrait};
+use crate::{api::model::Lrcx, get_lyrics::song::RemoteSongTrait};
 
 //----- Netease ------
 #[derive(Debug, Default, Clone)]
@@ -14,7 +14,7 @@ pub struct NeteaseSong {
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct NeteaseSongList (Vec<NeteaseSong>);
+pub struct NeteaseSongList(pub Vec<NeteaseSong>);
 
 #[derive(Debug, Clone)]
 pub struct NeteaseSongLyrics {
@@ -74,7 +74,10 @@ impl RemoteSongTrait for NeteaseSong {
         }
     }
     fn is_empty(&self) -> bool {
-        self.name.is_empty() && self.artist.is_empty() && self.album.is_empty() && self.id.is_empty()
+        self.name.is_empty()
+            && self.artist.is_empty()
+            && self.album.is_empty()
+            && self.id.is_empty()
     }
 }
 
@@ -112,6 +115,10 @@ impl std::iter::Iterator for NeteaseSongList {
 
 impl std::fmt::Display for NeteaseSong {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Name: {}\nArtist: {}\nAlbum: {}\nID: {}\n\n", self.name, self.artist, self.album, self.id)
+        write!(
+            f,
+            "Name: {}\nArtist: {}\nAlbum: {}\nID: {}\n\n",
+            self.name, self.artist, self.album, self.id
+        )
     }
 }

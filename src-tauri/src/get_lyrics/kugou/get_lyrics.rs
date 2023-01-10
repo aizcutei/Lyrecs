@@ -1,6 +1,4 @@
-use std::fs::File;
 use std::io::Read;
-use std::io::Write;
 
 use anyhow::Result as AnyResult;
 use base64::{decode_config, STANDARD_NO_PAD};
@@ -14,6 +12,8 @@ use std::result::Result::Ok;
 use crate::get_lyrics::kugou::model::{KugouSong, KugouSongList, KugouSongLyrics};
 use crate::get_lyrics::lyric_file::get_client_provider;
 use crate::get_lyrics::lyric_file::lyric_file_path;
+use crate::get_lyrics::lyric_file::write_lyric_file;
+use crate::get_lyrics::song::Parsable;
 use crate::get_lyrics::song::RemoteSongTrait;
 
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36";
@@ -25,7 +25,7 @@ const KEYS: [u8; 16] = [
     64, 71, 97, 119, 94, 50, 116, 71, 81, 54, 49, 45, 206, 210, 110, 105,
 ];
 
-async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
+pub async fn get_song_list(key_word: &str, number: i32) -> AnyResult<KugouSongList> {
     let requrl = SEARCH_URL.to_string() + key_word + "&pagesize=" + &number.to_string();
     let client = get_client_provider().get().await;
 
@@ -196,7 +196,6 @@ pub async fn save_lyric_file(song: &KugouSong) -> AnyResult<()> {
     //let lrcx = Lrcx::from_str(song_lyrics.get_original_lyric().unwrap(), "\n").unwrap();
     info!("writing lyric file of length");
 
-    let mut file = File::create(lyric_file_path(&song.artist, &song.name))?;
     /*
     if lrcx.is_empty() {
         file.write_all(b"[00:00.000] No Lyric for this song\n[00:10.000] \xE2\x99\xAB ~ ~ ~")?; //add a start line
@@ -210,9 +209,11 @@ pub async fn save_lyric_file(song: &KugouSong) -> AnyResult<()> {
         file.write_all(b"\n")?;
     }
     */
-    write!(file, "{}", serde_json::to_string(&lyric_str.to_lrcx())?)?;
 
-    Ok(())
+    write_lyric_file(
+        lyric_file_path(&song.artist, &song.name),
+        lyric_str.to_lrcx(),
+    )
 }
 
 #[cfg(test)]

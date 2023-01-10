@@ -14,8 +14,13 @@ pub fn vibrancy_effect(app: &mut App) -> std::result::Result<(), Box<dyn std::er
 
     #[cfg(target_os = "macos")]
     //apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, 1, 10.0)
-    apply_vibrancy(&main_window, NSVisualEffectMaterial::FullScreenUI, Some(NSVisualEffectState::Active), Some(10.0))
-        .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+    apply_vibrancy(
+        &main_window,
+        NSVisualEffectMaterial::FullScreenUI,
+        Some(NSVisualEffectState::Active),
+        Some(10.0),
+    )
+    .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
     #[cfg(target_os = "windows")]
     apply_blur(&main_window, Some((18, 18, 18, 125)))
